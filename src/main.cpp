@@ -28,6 +28,7 @@
 #include "subsystems/detail/detail.h"
 #include "subsystems/text/text_quality.h"
 #include "subsystems/menu/menu_scroll.h"
+#include "subsystems/camera/gt1_camera.h"
 
 namespace nfs5
 {
@@ -204,6 +205,7 @@ namespace nfs5
             IoHooks::GetInstance().Install( settings.m_Io );
             Gamepad::GetInstance().Install( settings.m_Controller, directory );
             MenuScroll::GetInstance().Install( settings.m_Menu );
+            Gt1Camera::GetInstance().Install();
 
             LOG_INFO( "Initialization finished" );
         }
@@ -238,6 +240,7 @@ extern "C" BOOL WINAPI DllMain(
     {
         if (reserved == nullptr && nfs5::s_Initialized.load())
         {
+            nfs5::Gt1Camera::GetInstance().Uninstall();
             nfs5::MenuScroll::GetInstance().Uninstall();
             nfs5::Gamepad::GetInstance().Uninstall();
             nfs5::IoHooks::GetInstance().Uninstall();
