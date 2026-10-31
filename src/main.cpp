@@ -33,11 +33,14 @@ namespace nfs5
 {
     namespace
     {
-        constexpr std::string_view VERSION = "1.2.0";
+        constexpr std::string_view VERSION = "1.3.0";
 
         HMODULE s_SelfModule = nullptr;
         hook::IatPatch s_CommandLinePatch;
         std::atomic< bool > s_Initialized = false;
+        // Set once the executable is verified and the game addresses are rebased, only then
+        // the subsystems may touch game memory, also when they uninstall.
+        std::atomic< bool > s_Hooked = false;
         hook::BytePatch s_CdCheckPatch;
 
         // Turns the 'je' after the 'fe.txt' probe in the CD search into a 'jmp'.
@@ -182,6 +185,8 @@ namespace nfs5
             if (!VerifyExecutable())
                 return;
 
+            s_Hooked = true;
+
             if (settings.m_Compat.m_SkipCdCheck)
                 SkipCdCheck();
 
@@ -249,7 +254,7 @@ extern "C" BOOL WINAPI DllMain(
     }
     else if (reason == DLL_PROCESS_DETACH)
     {
-        if (reserved == nullptr && nfs5::s_Initialized.load())
+        if (reserved == nullptr && nfs5::s_Hooked.load())
         {
             nfs5::MenuScroll::GetInstance().Uninstall();
             nfs5::Gamepad::GetInstance().Uninstall();
