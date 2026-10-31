@@ -347,7 +347,7 @@ namespace nfs5
         Widescreen & self = GetInstance();
 
         const std::uintptr_t caller = NFS5_RETURN_ADDRESS();
-        const bool race_switch = caller == game::fn::SET_VIDEO_MODE_RACE_START_RETURN || caller == game::fn::SET_VIDEO_MODE_RACE_OPTIONS_RETURN;
+        const bool race_switch = caller == game::fn::SET_VIDEO_MODE_RACE_START_RETURN.Get() || caller == game::fn::SET_VIDEO_MODE_RACE_OPTIONS_RETURN.Get();
 
         if (race_switch)
         {
@@ -412,7 +412,7 @@ namespace nfs5
         const void * accessor
     )
     {
-        return accessor != nullptr && *static_cast<const std::uintptr_t *>(accessor) == game::fn::RESOLUTION_ACCESSOR_VTABLE;
+        return accessor != nullptr && *static_cast<const std::uintptr_t *>(accessor) == game::fn::RESOLUTION_ACCESSOR_VTABLE.Get();
     }
 
 

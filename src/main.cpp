@@ -44,7 +44,7 @@ namespace nfs5
         void SkipCdCheck()
         {
             namespace fn = game::fn;
-            const std::uintptr_t branch = fn::CD_CHECK.m_Address + fn::CD_CHECK_BRANCH;
+            const std::uintptr_t branch = (fn::CD_CHECK.m_Address + fn::CD_CHECK_BRANCH).Get();
 
             if (!hook::MatchBytes( fn::CD_CHECK.m_Address, fn::CD_CHECK.m_Signature ))
             {
@@ -102,13 +102,26 @@ namespace nfs5
             const auto * nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(base + dos->e_lfanew);
 
             LOG_INFO( "Executable base {:08X} timestamp {:08X} image size {:08X}", base, nt->FileHeader.TimeDateStamp, nt->OptionalHeader.SizeOfImage );
-            if (base != game::EXPECTED_IMAGE_BASE
-                || nt->FileHeader.TimeDateStamp != game::EXPECTED_TIMESTAMP
-                || nt->OptionalHeader.SizeOfImage != game::EXPECTED_IMAGE_SIZE)
+
+            // The image may be loaded elsewhere than its link time base (Mandatory ASLR), game
+            // addresses are rebased with this delta and signatures ignore relocated operands.
+            const bool same_build = nt->FileHeader.TimeDateStamp == game::EXPECTED_TIMESTAMP
+                && nt->OptionalHeader.SizeOfImage == game::EXPECTED_IMAGE_SIZE;
+
+            if (!same_build)
             {
                 LOG_ERROR( "Unsupported 'Porsche.exe' build, expected the v3.5 executable, nothing was hooked" );
                 return false;
             }
+
+            game::g_ImageDelta = static_cast<std::intptr_t>(base) - static_cast<std::intptr_t>(game::EXPECTED_IMAGE_BASE);
+
+            if (game::g_ImageDelta != 0)
+            {
+                LOG_WARN( "'Porsche.exe' was loaded at {:08X} instead of {:08X}, game addresses are rebased by {}{:X}",
+                    base, game::EXPECTED_IMAGE_BASE, game::g_ImageDelta < 0 ? "-" : "+", game::g_ImageDelta < 0 ? -game::g_ImageDelta : game::g_ImageDelta );
+            }
+
             return true;
         }
 

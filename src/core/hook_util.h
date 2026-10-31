@@ -12,6 +12,7 @@
 
 #include <safetyhook.hpp>
 
+#include "../game/game_addr.h"
 #include "win_handle.h"
 
 namespace nfs5::hook
@@ -33,15 +34,41 @@ namespace nfs5::hook
         return reinterpret_cast<T *>(address);
     }
 
+    template <typename T>
+    [[nodiscard]] inline T & Ref(
+        game::GameAddr address
+    ) noexcept
+    {
+        return *reinterpret_cast<T *>(address.Get());
+    }
+
+    template <typename T>
+    [[nodiscard]] inline T * Ptr(
+        game::GameAddr address
+    ) noexcept
+    {
+        return reinterpret_cast<T *>(address.Get());
+    }
+
     // Parses '8B 44 24 ? 53' style signatures, '?' is a wildcard.
     [[nodiscard]] std::vector< std::int16_t > ParsePattern(
         std::string_view pattern
     );
 
+    // Absolute operands inside the main executable image are compared as stored on disk, so a
+    // signature written for the link time image base also matches a relocated image.
     [[nodiscard]] bool MatchBytes(
         std::uintptr_t address,
         std::string_view pattern
     );
+
+    [[nodiscard]] inline bool MatchBytes(
+        game::GameAddr address,
+        std::string_view pattern
+    )
+    {
+        return MatchBytes( address.Get(), pattern );
+    }
 
     // Searches a loaded module image for a pattern, returns '0' if not found
     // or if more than one match exists when unique is requested.
@@ -64,6 +91,26 @@ namespace nfs5::hook
         std::string_view expected,
         safetyhook::MidHookFn destination
     );
+
+    [[nodiscard]] inline std::unique_ptr< safetyhook::InlineHook > CreateInline(
+        std::string_view name,
+        game::GameAddr target,
+        std::string_view expected,
+        void * destination
+    )
+    {
+        return CreateInline( name, target.Get(), expected, destination );
+    }
+
+    [[nodiscard]] inline std::unique_ptr< safetyhook::MidHook > CreateMid(
+        std::string_view name,
+        game::GameAddr target,
+        std::string_view expected,
+        safetyhook::MidHookFn destination
+    )
+    {
+        return CreateMid( name, target.Get(), expected, destination );
+    }
 
     // Rewrites a 32 bit absolute pointer operand inside a verified instruction
     // The original value is restored when the object is destroyed.
@@ -89,6 +136,17 @@ namespace nfs5::hook
             std::size_t operand_offset,
             std::uint32_t value
         );
+
+        bool Apply(
+            std::string_view name,
+            game::GameAddr instruction,
+            std::string_view expected,
+            std::size_t operand_offset,
+            std::uint32_t value
+        )
+        {
+            return Apply( name, instruction.Get(), expected, operand_offset, value );
+        }
 
         void Restore();
 
@@ -123,6 +181,16 @@ namespace nfs5::hook
             std::span<const std::uint8_t> replacement
         );
 
+        bool Apply(
+            std::string_view name,
+            game::GameAddr address,
+            std::string_view expected,
+            std::span<const std::uint8_t> replacement
+        )
+        {
+            return Apply( name, address.Get(), expected, replacement );
+        }
+
         void Restore();
 
         [[nodiscard]] bool IsApplied() const
@@ -154,6 +222,15 @@ namespace nfs5::hook
             std::uintptr_t site,
             void * destination
         );
+
+        bool Apply(
+            std::string_view name,
+            game::GameAddr site,
+            void * destination
+        )
+        {
+            return Apply( name, site.Get(), destination );
+        }
 
         void Restore();
 

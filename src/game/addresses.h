@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <string_view>
 
+#include "game_addr.h"
+
 namespace nfs5::game
 {
     inline constexpr std::uint32_t EXPECTED_TIMESTAMP = 0x393C2E8F;
@@ -13,7 +15,7 @@ namespace nfs5::game
 
     struct Site
     {
-        std::uintptr_t m_Address;
+        GameAddr m_Address;
         std::string_view m_Signature;
     };
 
@@ -116,7 +118,7 @@ namespace nfs5::game
         };
 
         // 'FEScreenResolutionAccessor' layout. The mode arrays hold one entry per listed mode.
-        inline constexpr std::uintptr_t RESOLUTION_ACCESSOR_VTABLE = 0x005B5354;
+        inline constexpr GameAddr RESOLUTION_ACCESSOR_VTABLE = 0x005B5354;
         inline constexpr std::size_t ACCESSOR_COUNT = 0x14;
         inline constexpr std::size_t ACCESSOR_POSITION = 0x18;
         inline constexpr std::size_t RESOLUTION_WIDTHS = 0x38;
@@ -132,8 +134,8 @@ namespace nfs5::game
 
         // Return addresses of the two race mode switches, both pass the race resolution globals
         // '4B6CB9' race start in the outer loop, '41562E' after leaving in race options.
-        inline constexpr std::uintptr_t SET_VIDEO_MODE_RACE_START_RETURN = 0x004B6CBE;
-        inline constexpr std::uintptr_t SET_VIDEO_MODE_RACE_OPTIONS_RETURN = 0x00415633;
+        inline constexpr GameAddr SET_VIDEO_MODE_RACE_START_RETURN = 0x004B6CBE;
+        inline constexpr GameAddr SET_VIDEO_MODE_RACE_OPTIONS_RETURN = 0x00415633;
 
         // EA file layer open.
         inline constexpr Site FILE_LAYER_OPEN =
@@ -142,7 +144,7 @@ namespace nfs5::game
         };
 
         // EA thread create.
-        inline constexpr std::uintptr_t EA_THREAD_CREATE = 0x0055F420;
+        inline constexpr GameAddr EA_THREAD_CREATE = 0x0055F420;
         inline constexpr std::string_view EA_THREAD_CREATE_SIG = "A1 DC 57 6A 00 83 EC 18 55 33";
 
         // CPU clock measurement returning MHz scaled, called by the CPU detection
@@ -181,9 +183,9 @@ namespace nfs5::game
     {
         // IDirectInput 'EnumDevices' call setup inside the controller enumerator.
         // Hook point is the push of the callback, 'ecx' already holds the vtable.
-        inline constexpr std::uintptr_t ENUM_DEVICES_BLOCK = 0x00532BCF;
+        inline constexpr GameAddr ENUM_DEVICES_BLOCK = 0x00532BCF;
         inline constexpr std::string_view ENUM_DEVICES_BLOCK_SIG = "56 52 89 74 24 0C 8B 08 68 40 2C 53 00 56 50 FF 51 10";
-        inline constexpr std::uintptr_t ENUM_DEVICES_HOOK = 0x00532BD7;
+        inline constexpr GameAddr ENUM_DEVICES_HOOK = 0x00532BD7;
         inline constexpr std::string_view ENUM_DEVICES_HOOK_SIG = "68 40 2C 53 00";
 
         // Race loop render decision, 'cmp [RACE_SKIP_RENDER], ebx' then 'jne' over the render call
@@ -193,7 +195,7 @@ namespace nfs5::game
         // First instruction after the render call, reached on both paths.
         inline constexpr Site RACE_AFTER_RENDER = 
         {
-            0x00415C7F, "E8 C9 DC FF FF 85 C0"
+            0x00415C7F, "E8 ? ? ? ? 85 C0"
         };
 
         // 'fmul dword ptr [1/640]' inside the light flare sprite builder.
@@ -224,79 +226,79 @@ namespace nfs5::game
     namespace var
     {
         // Current render resolution.
-        inline constexpr std::uintptr_t SCREEN_WIDTH = 0x00619784;
-        inline constexpr std::uintptr_t SCREEN_HEIGHT = 0x00619788;
+        inline constexpr GameAddr SCREEN_WIDTH = 0x00619784;
+        inline constexpr GameAddr SCREEN_HEIGHT = 0x00619788;
 
         // Key state buffer, one byte per scan code without the extended bit, 128 bytes. The
         // window procedure writes 'scan & 7Fh' and clears the same 128 bytes itself.
-        inline constexpr std::uintptr_t KEY_STATE = 0x005DE028;
+        inline constexpr GameAddr KEY_STATE = 0x005DE028;
         inline constexpr std::size_t KEY_STATE_SIZE = 128;
 
         // TIMER module state [inittmr.c, lowtimer.c].
-        inline constexpr std::uintptr_t TIMER_CALLBACKS = 0x006B7C20;
+        inline constexpr GameAddr TIMER_CALLBACKS = 0x006B7C20;
         inline constexpr std::size_t TIMER_CALLBACK_COUNT = 8;
-        inline constexpr std::uintptr_t TIMER_TICKS_SECONDARY = 0x006B7C40;
-        inline constexpr std::uintptr_t TIMER_PIT_TICKS = 0x006B7C44;
-        inline constexpr std::uintptr_t TIMER_THREAD_RECORD = 0x006B7C60;
-        inline constexpr std::uintptr_t TIMER_TICKS = 0x006B7C7C;
-        inline constexpr std::uintptr_t TIMER_FREQUENCY = 0x005DEB48;
-        inline constexpr std::uintptr_t TIMER_PERIOD_FIXED = 0x006A5BF8;
-        inline constexpr std::uintptr_t TIMER_THREAD_EVENT = 0x006A5BFC;
-        inline constexpr std::uintptr_t TIMER_FRACTION = 0x006A5C00;
-        inline constexpr std::uintptr_t TIMER_NEXT_DUE = 0x006A5C04;
-        inline constexpr std::uintptr_t TIMER_RESOLUTION = 0x006A5C08;
-        inline constexpr std::uintptr_t TIMER_RUNNING = 0x006A5C0C;
-        inline constexpr std::uintptr_t TIMER_ID = 0x006A5C10;
-        inline constexpr std::uintptr_t TIMER_SUPPRESS_SIGNAL = 0x006A5C20;
-        inline constexpr std::uintptr_t TIMER_FRAME_EVENT = 0x0069E5DC;
+        inline constexpr GameAddr TIMER_TICKS_SECONDARY = 0x006B7C40;
+        inline constexpr GameAddr TIMER_PIT_TICKS = 0x006B7C44;
+        inline constexpr GameAddr TIMER_THREAD_RECORD = 0x006B7C60;
+        inline constexpr GameAddr TIMER_TICKS = 0x006B7C7C;
+        inline constexpr GameAddr TIMER_FREQUENCY = 0x005DEB48;
+        inline constexpr GameAddr TIMER_PERIOD_FIXED = 0x006A5BF8;
+        inline constexpr GameAddr TIMER_THREAD_EVENT = 0x006A5BFC;
+        inline constexpr GameAddr TIMER_FRACTION = 0x006A5C00;
+        inline constexpr GameAddr TIMER_NEXT_DUE = 0x006A5C04;
+        inline constexpr GameAddr TIMER_RESOLUTION = 0x006A5C08;
+        inline constexpr GameAddr TIMER_RUNNING = 0x006A5C0C;
+        inline constexpr GameAddr TIMER_ID = 0x006A5C10;
+        inline constexpr GameAddr TIMER_SUPPRESS_SIGNAL = 0x006A5C20;
+        inline constexpr GameAddr TIMER_FRAME_EVENT = 0x0069E5DC;
 
         // THRASH driver function pointer table filled by 'THRASH_opendll'.
-        inline constexpr std::uintptr_t THRASH_ABOUT = 0x006BD934;
-        inline constexpr std::uintptr_t THRASH_PAGEFLIP = 0x006BD948;
+        inline constexpr GameAddr THRASH_ABOUT = 0x006BD934;
+        inline constexpr GameAddr THRASH_PAGEFLIP = 0x006BD948;
 
         // char pointer to the drivers folder prefix, '.\drivers\' in 'sub_467470'.
-        inline constexpr std::uintptr_t DRIVER_FOLDER = 0x0065B304;
+        inline constexpr GameAddr DRIVER_FOLDER = 0x0065B304;
 
         // 'THRASH_readrect', copies a framebuffer rectangle.
-        inline constexpr std::uintptr_t THRASH_READRECT = 0x006BD96C;
+        inline constexpr GameAddr THRASH_READRECT = 0x006BD96C;
 
         // Race resolution chosen in 'Options -> Graphics', written by the frontend.
-        inline constexpr std::uintptr_t RACE_WIDTH = 0x00657A48;
-        inline constexpr std::uintptr_t RACE_HEIGHT = 0x00657A4C;
-        inline constexpr std::uintptr_t RACE_BPP = 0x00657A50;
+        inline constexpr GameAddr RACE_WIDTH = 0x00657A48;
+        inline constexpr GameAddr RACE_HEIGHT = 0x00657A4C;
+        inline constexpr GameAddr RACE_BPP = 0x00657A50;
 
         // Global render context, +0x60 software flag, +0x70 display mode object.
-        inline constexpr std::uintptr_t RENDER_CONTEXT = 0x00628130;
+        inline constexpr GameAddr RENDER_CONTEXT = 0x00628130;
 
         // Race loop state.
-        inline constexpr std::uintptr_t RACE_SKIP_RENDER = 0x00606AAC;
-        inline constexpr std::uintptr_t RACE_MENU_RETURN = 0x00606AD8;
-        inline constexpr std::uintptr_t RACE_PAUSED = 0x00606A90;
-        inline constexpr std::uintptr_t RACE_SUSPENDED = 0x00606A98;
-        inline constexpr std::uintptr_t RACE_EXIT = 0x00606A8C;
-        inline constexpr std::uintptr_t SIM_STEP_COUNT = 0x00606AC4;
+        inline constexpr GameAddr RACE_SKIP_RENDER = 0x00606AAC;
+        inline constexpr GameAddr RACE_MENU_RETURN = 0x00606AD8;
+        inline constexpr GameAddr RACE_PAUSED = 0x00606A90;
+        inline constexpr GameAddr RACE_SUSPENDED = 0x00606A98;
+        inline constexpr GameAddr RACE_EXIT = 0x00606A8C;
+        inline constexpr GameAddr SIM_STEP_COUNT = 0x00606AC4;
 
         // Car pointer lists, the same car objects appear in several lists
         // Racers, 9 slots, count at 'CAR_LIST_RACERS_COUNT'.
-        inline constexpr std::uintptr_t CAR_LIST_RACERS = 0x005E8B34;
-        inline constexpr std::uintptr_t CAR_LIST_RACERS_COUNT = 0x005E8B58;
+        inline constexpr GameAddr CAR_LIST_RACERS = 0x005E8B34;
+        inline constexpr GameAddr CAR_LIST_RACERS_COUNT = 0x005E8B58;
 
         // Pursuit and police list used by the helicopter spot light, 9 slots.
-        inline constexpr std::uintptr_t CAR_LIST_POLICE = 0x005E8AC4;
-        inline constexpr std::uintptr_t CAR_LIST_POLICE_COUNT = 0x005E8ABC;
+        inline constexpr GameAddr CAR_LIST_POLICE = 0x005E8AC4;
+        inline constexpr GameAddr CAR_LIST_POLICE_COUNT = 0x005E8ABC;
 
         // Traffic, 128 slots.
-        inline constexpr std::uintptr_t CAR_LIST_TRAFFIC = 0x005E8C24;
-        inline constexpr std::uintptr_t CAR_LIST_TRAFFIC_COUNT = 0x005E8B5C;
+        inline constexpr GameAddr CAR_LIST_TRAFFIC = 0x005E8C24;
+        inline constexpr GameAddr CAR_LIST_TRAFFIC_COUNT = 0x005E8B5C;
 
         // Race camera blocks, one per view, 268 bytes each, first dword is the target car.
-        inline constexpr std::uintptr_t CAMERA_BLOCKS = 0x00627E80;
+        inline constexpr GameAddr CAMERA_BLOCKS = 0x00627E80;
         inline constexpr std::size_t CAMERA_BLOCK_STRIDE = 268;
         inline constexpr std::size_t CAMERA_BLOCK_COUNT = 2;
 
         // EA file layer handle table, 32 byte entries, count at 'FILE_TABLE_COUNT'.
-        inline constexpr std::uintptr_t FILE_TABLE = 0x006AF084;
-        inline constexpr std::uintptr_t FILE_TABLE_COUNT = 0x006AF080;
+        inline constexpr GameAddr FILE_TABLE = 0x006AF084;
+        inline constexpr GameAddr FILE_TABLE_COUNT = 0x006AF080;
     }
 
     // DirectInput controller layer, 'input.c' of the game.
@@ -341,14 +343,14 @@ namespace nfs5::game
         };
 
         // 'FEControllerInputAccessor', one per action, its 24 byte binding sits at +0x14.
-        inline constexpr std::uintptr_t INPUT_ACCESSOR_VTABLE = 0x005BACF4;
+        inline constexpr GameAddr INPUT_ACCESSOR_VTABLE = 0x005BACF4;
         inline constexpr std::size_t ACCESSOR_BINDING = 0x14;
 
         // 'IDirectInputA' pointer and controller table, 32 entries of 268 bytes. An entry holds
         // the device, flags, the device type and a 256 byte state buffer.
-        inline constexpr std::uintptr_t DIRECT_INPUT = 0x0069CB08;
-        inline constexpr std::uintptr_t DEVICE_COUNT = 0x0069CB0C;
-        inline constexpr std::uintptr_t DEVICE_TABLE = 0x006BE040;
+        inline constexpr GameAddr DIRECT_INPUT = 0x0069CB08;
+        inline constexpr GameAddr DEVICE_COUNT = 0x0069CB0C;
+        inline constexpr GameAddr DEVICE_TABLE = 0x006BE040;
         inline constexpr std::size_t DEVICE_STRIDE = 268;
         inline constexpr int MAX_DEVICES = 32;
     }
@@ -366,7 +368,7 @@ namespace nfs5::game
         // 'm_OperandOffset' is the global address.
         struct SizeRead
         {
-            std::uintptr_t m_Address;
+            GameAddr m_Address;
             std::string_view m_Signature;
             std::size_t m_OperandOffset;
             SizeAxis m_Axis;
@@ -461,8 +463,8 @@ namespace nfs5::game
             0x004CBBF4, "E8 47 0C FF FF 89 44 24 48"
         };
 
-        inline constexpr std::uintptr_t RESOLUTION_WIDTH = 0x004BAAF0;
-        inline constexpr std::uintptr_t RESOLUTION_HEIGHT = 0x004BC840;
+        inline constexpr GameAddr RESOLUTION_WIDTH = 0x004BAAF0;
+        inline constexpr GameAddr RESOLUTION_HEIGHT = 0x004BC840;
 
         // Mode setters, first instruction after the screen size has been written.
         inline constexpr Site MODE_WRITE =
@@ -501,11 +503,11 @@ namespace nfs5::game
         };
 
         // Bits per pixel by shape type, indexed with type and 7Fh.
-        inline constexpr std::uintptr_t SHAPE_BITS_TABLE = 0x005DE890;
+        inline constexpr GameAddr SHAPE_BITS_TABLE = 0x005DE890;
 
         // EAGL display size used by the loading screen blit.
-        inline constexpr std::uintptr_t DISPLAY_WIDTH = 0x005DEAC8;
-        inline constexpr std::uintptr_t DISPLAY_HEIGHT = 0x005DEACC;
+        inline constexpr GameAddr DISPLAY_WIDTH = 0x005DEAC8;
+        inline constexpr GameAddr DISPLAY_HEIGHT = 0x005DEACC;
 
         // Digital speed and rpm readouts, 'HSpeed' and 'HTachDigital' draw methods. Each asks
         // whether its gauge is enabled at all, so the digital value is also
@@ -521,14 +523,14 @@ namespace nfs5::game
         };
 
         // Active HUD layout record, pointer table at 'LAYOUT_TABLE' indexed by 'LAYOUT_INDEX'.
-        inline constexpr std::uintptr_t LAYOUT_TABLE = 0x0060C904;
-        inline constexpr std::uintptr_t LAYOUT_INDEX = 0x0060C95C;
+        inline constexpr GameAddr LAYOUT_TABLE = 0x0060C904;
+        inline constexpr GameAddr LAYOUT_INDEX = 0x0060C95C;
         inline constexpr std::size_t LAYOUT_SPEEDOMETER = 0x30;
         inline constexpr std::size_t LAYOUT_TACHOMETER = 0x38;
         inline constexpr std::int32_t GAUGE_DIGITAL = 1;
 
         // Font set scale.
-        inline constexpr std::uintptr_t FONT_SET_SCALE = 0x00536CE0;
+        inline constexpr GameAddr FONT_SET_SCALE = 0x00536CE0;
         inline constexpr std::string_view FONT_SET_SCALE_SIG = "8B 44 24 04 56 8B F1 50 6A 02";
     }
 
@@ -592,7 +594,7 @@ namespace nfs5::game
         inline constexpr float OBJECT_LIMIT_20_STOCK = 700.0f;
 
         // Wheel LOD per detail level and body LOD, int32 [3][7].
-        inline constexpr std::uintptr_t WHEEL_LOD_TABLE = 0x005CDB44;
+        inline constexpr GameAddr WHEEL_LOD_TABLE = 0x005CDB44;
 
         // Car LOD selection 'sub_439F90' keeps EBX as the first LOD a car may use.
 		// It starts at '5CD5B8[car detail] = {3, 3, 2}', one lower on fast machines,
@@ -666,13 +668,13 @@ namespace nfs5::game
         };
 
         // THRASH font driver table, font +E8h holds it when glyphs are drawn as textures.
-        inline constexpr std::uintptr_t FONT_DRIVER_TABLE = 0x005DFB60;
+        inline constexpr GameAddr FONT_DRIVER_TABLE = 0x005DFB60;
 
         // Font texture object selected for drawing.
-        inline constexpr std::uintptr_t CURRENT_FONT_TEXTURE = 0x006A642C;
+        inline constexpr GameAddr CURRENT_FONT_TEXTURE = 0x006A642C;
 
         // Display color depth, 8 bit displays use the software font path.
-        inline constexpr std::uintptr_t DISPLAY_BPP = 0x005DEAD0;
+        inline constexpr GameAddr DISPLAY_BPP = 0x005DEAD0;
 
         // Font object fields.
         inline constexpr std::size_t FONT_HEADER = 0x24;
@@ -687,12 +689,12 @@ namespace nfs5::game
         inline constexpr std::uint32_t FLAG_TWO_STAGE_PALETTE = 0x4;
 
         // THRASH driver entry points, filled by 'THRASH_opendll'.
-        inline constexpr std::uintptr_t THRASH_TUPDATE = 0x006BD940;
-        inline constexpr std::uintptr_t THRASH_TFREE = 0x006BD94C;
-        inline constexpr std::uintptr_t THRASH_SETTEXTURE = 0x006BD954;
-        inline constexpr std::uintptr_t THRASH_SETVIDEOMODE = 0x006BD958;
-        inline constexpr std::uintptr_t THRASH_TALLOC = 0x006BD968;
-        inline constexpr std::uintptr_t THRASH_TRESET = 0x006BD988;
+        inline constexpr GameAddr THRASH_TUPDATE = 0x006BD940;
+        inline constexpr GameAddr THRASH_TFREE = 0x006BD94C;
+        inline constexpr GameAddr THRASH_SETTEXTURE = 0x006BD954;
+        inline constexpr GameAddr THRASH_SETVIDEOMODE = 0x006BD958;
+        inline constexpr GameAddr THRASH_TALLOC = 0x006BD968;
+        inline constexpr GameAddr THRASH_TRESET = 0x006BD988;
 
         // 'THRASH_about' block, +2Ch format count, +30h pointer to the supported format flags.
         inline constexpr std::size_t ABOUT_FORMAT_COUNT = 0x2C;
@@ -709,24 +711,24 @@ namespace nfs5::game
     // 'sub_525F80' has no case for them, and the key slot [+10h] of both classes is 'sub_4D1B40' [not handled].
     namespace menu
     {
-        inline constexpr std::uintptr_t COMBOBOX_VTABLE = 0x005B5C24;
-        inline constexpr std::uintptr_t LISTBOX_VTABLE = 0x005B611C;
+        inline constexpr GameAddr COMBOBOX_VTABLE = 0x005B5C24;
+        inline constexpr GameAddr LISTBOX_VTABLE = 0x005B611C;
 
         // 'FEEmbossedVerticalSlider_MainFunctionality', the scroll bar of a list.
-        inline constexpr std::uintptr_t LIST_SLIDER_VTABLE = 0x005B6A64;
+        inline constexpr GameAddr LIST_SLIDER_VTABLE = 0x005B6A64;
 
         // 'EventPump@FERT', slot 5 [+14h] polls the input, slot 9 [+24h] dispatches an event.
-        inline constexpr std::uintptr_t EVENT_PUMP_VTABLE = 0x005BB150;
+        inline constexpr GameAddr EVENT_PUMP_VTABLE = 0x005BB150;
         inline constexpr std::size_t EVENT_PUMP_POLL_SLOT = 0x14;
         inline constexpr std::size_t EVENT_PUMP_DISPATCH_SLOT = 0x24;
-        inline constexpr std::uintptr_t EVENT_PUMP_POLL = 0x00529700;
-        inline constexpr std::uintptr_t EVENT_PUMP_DISPATCH = 0x00529990;
+        inline constexpr GameAddr EVENT_PUMP_POLL = 0x00529700;
+        inline constexpr GameAddr EVENT_PUMP_DISPATCH = 0x00529990;
 
         // Slot 0 [+0h] destructor and slot 8 [+20h] mouse move, the same for both list classes.
         inline constexpr std::size_t LIST_DTOR_SLOT = 0x00;
         inline constexpr std::size_t LIST_MOVE_SLOT = 0x20;
-        inline constexpr std::uintptr_t LIST_DTOR = 0x004CCE70;
-        inline constexpr std::uintptr_t LIST_MOVE = 0x004C6F60;
+        inline constexpr GameAddr LIST_DTOR = 0x004CCE70;
+        inline constexpr GameAddr LIST_MOVE = 0x004C6F60;
 
         // 'WM_MOUSEWHEEL' handler registered by 'sub_536E50', stdcall with 6 arguments.
         inline constexpr Site WHEEL_MESSAGE =
@@ -734,32 +736,32 @@ namespace nfs5::game
             0x00537020, "8B 44 24 04 85 C0"
         };
 
-        inline constexpr std::uintptr_t GAME_WINDOW = 0x006B7BF8;
+        inline constexpr GameAddr GAME_WINDOW = 0x006B7BF8;
 
         // Mouse position of the game, as carried by the mouse events.
-        inline constexpr std::uintptr_t MOUSE_X = 0x0069E07C;
-        inline constexpr std::uintptr_t MOUSE_Y = 0x0069E080;
+        inline constexpr GameAddr MOUSE_X = 0x0069E07C;
+        inline constexpr GameAddr MOUSE_Y = 0x0069E080;
 
         // Non zero while the front end runs.
-        inline constexpr std::uintptr_t FRONT_END = 0x0065B928;
+        inline constexpr GameAddr FRONT_END = 0x0065B928;
 
         // Control rectangle [l, t, r, b] into '*out', thiscall.
-        inline constexpr std::uintptr_t CONTROL_RECT = 0x004C8670;
+        inline constexpr GameAddr CONTROL_RECT = 0x004C8670;
         // Control or one of its parents hidden, fastcall.
-        inline constexpr std::uintptr_t CONTROL_HIDDEN = 0x004C7E40;
+        inline constexpr GameAddr CONTROL_HIDDEN = 0x004C7E40;
         // Point [x, y] inside a part of a rectangle, thiscall.
-        inline constexpr std::uintptr_t PART_HIT = 0x004E2970;
+        inline constexpr GameAddr PART_HIT = 0x004E2970;
         // Mouse over the scroll bar, fastcall.
-        inline constexpr std::uintptr_t SLIDER_HOVER = 0x004DBA50;
+        inline constexpr GameAddr SLIDER_HOVER = 0x004DBA50;
         // Front end sends the mouse move at the current spot again, fastcall.
-        inline constexpr std::uintptr_t REFRESH_MOUSE = 0x004D6140;
+        inline constexpr GameAddr REFRESH_MOUSE = 0x004D6140;
 
         // '__RTDynamicCast' and the type descriptors of the colour list check.
-        inline constexpr std::uintptr_t DYNAMIC_CAST = 0x005A134B;
-        inline constexpr std::uintptr_t TD_POSITIONABLE_ACCESSOR = 0x005D70E0;
-        inline constexpr std::uintptr_t TD_COLOUR_ACCESSOR = 0x005D7240;
+        inline constexpr GameAddr DYNAMIC_CAST = 0x005A134B;
+        inline constexpr GameAddr TD_POSITIONABLE_ACCESSOR = 0x005D70E0;
+        inline constexpr GameAddr TD_COLOUR_ACCESSOR = 0x005D7240;
         // 'FEColourAccessor': index is the 'own colour' entry, thiscall.
-        inline constexpr std::uintptr_t COLOUR_IS_SPECIAL = 0x004B94B0;
+        inline constexpr GameAddr COLOUR_IS_SPECIAL = 0x004B94B0;
 
         // 'FEComboBox' / 'FEListBox' fields.
         inline constexpr std::size_t CONTROL_FLAGS = 0x10C;     // 40h = open
