@@ -107,7 +107,7 @@ namespace nfs5
         const float dx = sphere[0] - camera[0];
         const float dy = sphere[1] - camera[1];
         const float dz = sphere[2] - camera[2];
-        const float gap = std::sqrt( dx * dx + dy * dy + dz * dz ) - sphere[3];
+        const float gap = std::sqrt( dx * dx + dy * dy + dz * dz );
 
         // Close by the walls only hide what the depth buffer hides anyway. Far away they still
         // drop track pieces whose surrounding ground is not drawn, those would float in the air.
@@ -204,12 +204,10 @@ namespace nfs5
         if (m_DrawDistanceHook)
         {
             const auto limit_400000 = static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(&s_ObjectLimit400000));
-            const auto limit_20 = static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(&s_ObjectLimit20));
 
             ok &= m_ObjectLimitPatch400000.Apply( "ObjectLimit400000", site::OBJECT_LIMIT_400000.m_Address, site::OBJECT_LIMIT_400000.m_Signature,
                 site::OBJECT_LIMIT_OPERAND, limit_400000 );
-            ok &= m_ObjectLimitPatch20.Apply( "ObjectLimit20", site::OBJECT_LIMIT_20.m_Address, site::OBJECT_LIMIT_20.m_Signature,
-                site::OBJECT_LIMIT_OPERAND, limit_20 );
+            // Preserve the stock distance for object flag 0x20; extending it exposes floating scenery.
         }
 
         // The far plane has to cover the longest distance anything is drawn at, with room for

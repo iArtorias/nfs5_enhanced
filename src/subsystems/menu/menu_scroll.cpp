@@ -130,6 +130,7 @@ namespace nfs5
         {
             return ListUnder( list, MouseX(), MouseY() );
         }
+
     }
 
 
@@ -376,6 +377,33 @@ namespace nfs5
         MenuScroll & self = GetInstance();
         const int result = reinterpret_cast<ListEventFn>(menu::LIST_MOVE.Get())(list, event);
 
+        // Issue #14: vanilla may leave the slider in drag mode after MouseUp outside
+        // the hit rectangle. Only reset the verified slider state when LMB is up.
+        if (event != nullptr && At<int>( event, 4 ) == 7 &&
+            At<char>( list, menu::LIST_HAS_SLIDER ) != 0)
+        {
+            void * slider = At<void *>( list, menu::LIST_SLIDER );
+            if (slider != nullptr &&
+                *static_cast<std::uintptr_t *>(slider) == menu::LIST_SLIDER_VTABLE)
+            {
+                const int mode = At<int>( slider, 0xEC );
+                const int drag = At<int>( slider, 0xF0 );
+                const bool leftDown = (::GetAsyncKeyState( VK_LBUTTON ) & 0x8000) != 0;
+                if (!leftDown && mode == 3 && (drag == 3 || drag == 4))
+                {
+                    // A later vanilla MouseUp was observed changing +0xEC from 3 to 0.
+                    // Preserve +0xF0: vanilla itself left drag=3 immediately afterward.
+                    At<int>( slider, 0xEC ) = 0;
+                }
+            }
+        }
+
+        const int result = reinterpret_cast<ListEventFn>(menu::LIST_MOVE)(list, event);
+
+        // With enhanced scrolling disabled, only the vanilla drag fix runs.
+        if (!self.m_Settings.m_Scroll)
+            return result;
+
         const int x = At<int>( event, 8 );
         const int y = At<int>( event, 0xC );
         const bool open = At<char>( list, menu::LIST_ALWAYS_OPEN ) != 0 || IsOpen( list );
@@ -489,13 +517,8 @@ namespace nfs5
 
         m_Settings = settings;
 
-        if (!settings.m_Scroll)
-        {
-            LOG_INFO( "Menu scrolling disabled" );
-            return true;
-        }
-
-        // Destructor and mouse move first, without them no list is remembered.
+        // List move hooks implement the drag fix regardless of the scrolling setting.
+        // Destructor hooks also track list lifetime for enhanced scrolling.
         bool ok = m_ComboDtorPatch.Apply( "ComboBoxDtor", menu::COMBOBOX_VTABLE + menu::LIST_DTOR_SLOT, menu::LIST_DTOR,
             reinterpret_cast<void *>(&ListDtorHook) );
         ok = m_ComboMovePatch.Apply( "ComboBoxMouseMove", menu::COMBOBOX_VTABLE + menu::LIST_MOVE_SLOT, menu::LIST_MOVE,
@@ -507,9 +530,17 @@ namespace nfs5
 
         if (!ok)
         {
-            LOG_ERROR( "Menu scrolling not installed, the list classes do not match" );
+            LOG_ERROR( "Menu list hooks not installed, the list classes do not match" );
             Uninstall();
             return false;
+        }
+
+        // Do not enable wheel or keyboard scrolling when Scroll=0.
+        if (!settings.m_Scroll)
+        {
+            m_Installed = true;
+            LOG_INFO( "Menu scrollbar drag fix installed; enhanced scrolling disabled" );
+            return true;
         }
 
         m_WheelHook = hook::CreateInline( "MenuWheelMessage", menu::WHEEL_MESSAGE.m_Address, menu::WHEEL_MESSAGE.m_Signature,
