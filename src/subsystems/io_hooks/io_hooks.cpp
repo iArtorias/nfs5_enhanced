@@ -91,7 +91,7 @@ namespace nfs5
         IoHooks & self = GetInstance();
         const auto original = self.m_CreateFilePatch.GetOriginal< decltype(&::CreateFileA) >();
         auto * pending = t_PendingGameplayOpen;
-        const DWORD write_access = GENERIC_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA |
+        const DWORD write_access = GENERIC_ALL | GENERIC_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA |
             FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | DELETE | WRITE_DAC | WRITE_OWNER;
         if (self.m_Settings.m_GameplayRedirect && name != nullptr && disposition == OPEN_EXISTING &&
             (desired_access & write_access) == 0 && (attributes & FILE_FLAG_BACKUP_SEMANTICS) == 0)

@@ -1,8 +1,8 @@
 #include <winver.h>
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 1,2,0,0
-PRODUCTVERSION 1,2,0,0
+FILEVERSION 1,3,0,0
+PRODUCTVERSION 1,3,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS VOS_NT_WINDOWS32
@@ -14,11 +14,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "NFS5 Enhanced, enhanced vanilla experience for NFS Porsche Unleashed"
-            VALUE "FileVersion", "1.2.0"
+            VALUE "FileVersion", "1.3.0"
             VALUE "InternalName", "nfs5_enhanced"
             VALUE "OriginalFilename", "nfs5_enhanced.asi"
             VALUE "ProductName", "NFS5 Enhanced"
-            VALUE "ProductVersion", "1.2.0"
+            VALUE "ProductVersion", "1.3.0"
         END
     END
     BLOCK "VarFileInfo"

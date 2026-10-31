@@ -129,6 +129,13 @@ namespace nfs5
         }
 
         ScopedPageProtection protection( table, sizeof( STOCK_WHEEL_TABLE ) );
+
+        if (!protection.IsChanged())
+        {
+            LOG_ERROR( "Wheel LOD table could not be unprotected, distant cars keep the game wheels" );
+            return false;
+        }
+
         std::memcpy( m_OriginalWheelTable.data(), table, sizeof( STOCK_WHEEL_TABLE ) );
 
         // The two farthest body LODs take the wheels of LOD 1, wheels are placed per wheel
@@ -154,7 +161,11 @@ namespace nfs5
         auto * table = hook::Ptr<std::int32_t>( game::detail::WHEEL_LOD_TABLE );
 
         ScopedPageProtection protection( table, sizeof( STOCK_WHEEL_TABLE ) );
-        std::memcpy( table, m_OriginalWheelTable.data(), sizeof( STOCK_WHEEL_TABLE ) );
+
+        if (protection.IsChanged())
+        {
+            std::memcpy( table, m_OriginalWheelTable.data(), sizeof( STOCK_WHEEL_TABLE ) );
+        }
 
         m_WheelTablePatched = false;
     }

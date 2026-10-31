@@ -34,18 +34,21 @@ namespace nfs5
 {
     namespace
     {
-        constexpr std::string_view VERSION = "1.2.0";
+        constexpr std::string_view VERSION = "1.3.0";
 
         HMODULE s_SelfModule = nullptr;
         hook::IatPatch s_CommandLinePatch;
         std::atomic< bool > s_Initialized = false;
+        // Set once the executable is verified and the game addresses are rebased, only then
+        // the subsystems may touch game memory, also when they uninstall.
+        std::atomic< bool > s_Hooked = false;
         hook::BytePatch s_CdCheckPatch;
 
         // Turns the 'je' after the 'fe.txt' probe in the CD search into a 'jmp'.
         void SkipCdCheck()
         {
             namespace fn = game::fn;
-            const std::uintptr_t branch = fn::CD_CHECK.m_Address + fn::CD_CHECK_BRANCH;
+            const std::uintptr_t branch = (fn::CD_CHECK.m_Address + fn::CD_CHECK_BRANCH).Get();
 
             if (!hook::MatchBytes( fn::CD_CHECK.m_Address, fn::CD_CHECK.m_Signature ))
             {
@@ -103,13 +106,26 @@ namespace nfs5
             const auto * nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(base + dos->e_lfanew);
 
             LOG_INFO( "Executable base {:08X} timestamp {:08X} image size {:08X}", base, nt->FileHeader.TimeDateStamp, nt->OptionalHeader.SizeOfImage );
-            if (base != game::EXPECTED_IMAGE_BASE
-                || nt->FileHeader.TimeDateStamp != game::EXPECTED_TIMESTAMP
-                || nt->OptionalHeader.SizeOfImage != game::EXPECTED_IMAGE_SIZE)
+
+            // The image may be loaded elsewhere than its link time base (Mandatory ASLR), game
+            // addresses are rebased with this delta and signatures ignore relocated operands.
+            const bool same_build = nt->FileHeader.TimeDateStamp == game::EXPECTED_TIMESTAMP
+                && nt->OptionalHeader.SizeOfImage == game::EXPECTED_IMAGE_SIZE;
+
+            if (!same_build)
             {
                 LOG_ERROR( "Unsupported 'Porsche.exe' build, expected the v3.5 executable, nothing was hooked" );
                 return false;
             }
+
+            game::g_ImageDelta = static_cast<std::intptr_t>(base) - static_cast<std::intptr_t>(game::EXPECTED_IMAGE_BASE);
+
+            if (game::g_ImageDelta != 0)
+            {
+                LOG_WARN( "'Porsche.exe' was loaded at {:08X} instead of {:08X}, game addresses are rebased by {}{:X}",
+                    base, game::EXPECTED_IMAGE_BASE, game::g_ImageDelta < 0 ? "-" : "+", game::g_ImageDelta < 0 ? -game::g_ImageDelta : game::g_ImageDelta );
+            }
+
             return true;
         }
 
@@ -169,6 +185,8 @@ namespace nfs5
 
             if (!VerifyExecutable())
                 return;
+
+            s_Hooked = true;
 
             if (settings.m_Compat.m_SkipCdCheck)
                 SkipCdCheck();
@@ -238,7 +256,7 @@ extern "C" BOOL WINAPI DllMain(
     }
     else if (reason == DLL_PROCESS_DETACH)
     {
-        if (reserved == nullptr && nfs5::s_Initialized.load())
+        if (reserved == nullptr && nfs5::s_Hooked.load())
         {
             nfs5::Gt1Camera::GetInstance().Uninstall();
             nfs5::MenuScroll::GetInstance().Uninstall();

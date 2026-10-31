@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- The plugin works when Windows loads `Porsche.exe` at another address than `0x00400000`, for example
+  with Mandatory ASLR (Exploit Protection, "Force randomization for images") turned on. Before, every
+  hook failed with `signature mismatch, found <unreadable>`. Game addresses are rebased at run time and
+  signatures ignore operands the loader relocated. The build is still identified by timestamp and image size.
+- Interpolation did not install on some copies of `Porsche.exe` because the signature of the
+  render call site compared the call target. The target is no longer part of the signature.
+
 ## 1.3.0 (2026-10-23)
 
 - Menu lists (cars, paints, tracks and others) scroll with the mouse wheel over the list, and with

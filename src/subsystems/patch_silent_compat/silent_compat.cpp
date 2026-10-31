@@ -237,8 +237,14 @@ namespace nfs5
         HMODULE driver
     )
     {
-        if (!m_Settings.m_ThrashDriverLeakFix || driver == nullptr || m_ThrashUnlockPatch.IsApplied())
+        if (!m_Settings.m_ThrashDriverLeakFix || driver == nullptr)
             return;
+
+        // A reloaded driver is a new module, drop the patch of the previous one first. Restore
+        // skips the write when that module is already unmapped.
+        m_ThrashUnlockPatch.Restore();
+        s_DriverFreeImport = nullptr;
+        s_DriverFreeOverride = nullptr;
 
         // These patterns only exist in Verok OpenGL thrash drivers, stock 'dx7z.dll' does not match.
         const std::uintptr_t free_call = hook::FindPattern( driver, "FF 15 ? ? ? ? 83 C4 04 FF 74 24", false );

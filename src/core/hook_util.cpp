@@ -1,6 +1,8 @@
 #include "hook_util.h"
 
+#include <algorithm>
 #include <cstring>
+#include <fstream>
 
 #include "log.h"
 
@@ -69,6 +71,146 @@ namespace nfs5::hook
 
             return result;
         }
+
+        // Relocated dword positions (RVAs) of the main executable image, read from the .reloc
+        // directory of the file on disk because that section is discardable in memory.
+        struct RelocTable
+        {
+            std::uintptr_t m_Base = 0;
+            std::size_t m_Size = 0;
+            std::vector< std::uint32_t > m_Rvas;
+        };
+
+
+        const RelocTable & GetRelocTable()
+        {
+            static const RelocTable table = []()
+            {
+                RelocTable result;
+
+                if (game::g_ImageDelta == 0)
+                    return result;
+
+                const auto base = reinterpret_cast<std::uintptr_t>(::GetModuleHandleW( nullptr ));
+                const auto * dos = reinterpret_cast<const IMAGE_DOS_HEADER *>(base);
+                const auto * nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(base + dos->e_lfanew);
+                const IMAGE_DATA_DIRECTORY & directory = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+
+                result.m_Base = base;
+                result.m_Size = nt->OptionalHeader.SizeOfImage;
+
+                if (directory.VirtualAddress == 0 || directory.Size == 0)
+                {
+                    LOG_ERROR( "Executable image has no relocation directory, signatures with absolute operands will not match" );
+                    return result;
+                }
+
+                std::wstring path( MAX_PATH, L'\0' );
+                path.resize( ::GetModuleFileNameW( nullptr, path.data(), static_cast<DWORD>(path.size()) ) );
+
+                std::ifstream file( path, std::ios::binary );
+                const IMAGE_SECTION_HEADER * section = IMAGE_FIRST_SECTION( nt );
+                std::vector< std::uint8_t > block;
+
+                for (WORD i = 0; file && i < nt->FileHeader.NumberOfSections; ++i, ++section)
+                {
+                    const DWORD extent = (std::max)( section->Misc.VirtualSize, section->SizeOfRawData );
+
+                    if (directory.VirtualAddress < section->VirtualAddress || directory.VirtualAddress >= section->VirtualAddress + extent)
+                        continue;
+
+                    block.resize( directory.Size );
+                    file.seekg( section->PointerToRawData + (directory.VirtualAddress - section->VirtualAddress) );
+                    file.read( reinterpret_cast<char *>(block.data()), static_cast<std::streamsize>(block.size()) );
+
+                    if (!file)
+                        block.clear();
+
+                    break;
+                }
+
+                for (std::size_t offset = 0; offset + sizeof( IMAGE_BASE_RELOCATION ) <= block.size();)
+                {
+                    IMAGE_BASE_RELOCATION header = {};
+                    std::memcpy( &header, block.data() + offset, sizeof( header ) );
+
+                    if (header.SizeOfBlock < sizeof( header ) || offset + header.SizeOfBlock > block.size())
+                        break;
+
+                    const std::size_t count = (header.SizeOfBlock - sizeof( header )) / sizeof( WORD );
+
+                    for (std::size_t e = 0; e < count; ++e)
+                    {
+                        WORD entry = 0;
+                        std::memcpy( &entry, block.data() + offset + sizeof( header ) + e * sizeof( WORD ), sizeof( entry ) );
+
+                        if ((entry >> 12) == IMAGE_REL_BASED_HIGHLOW)
+                        {
+                            result.m_Rvas.push_back( header.VirtualAddress + (entry & 0x0FFF) );
+                        }
+                    }
+
+                    offset += header.SizeOfBlock;
+                }
+
+                std::sort( result.m_Rvas.begin(), result.m_Rvas.end() );
+
+                if (result.m_Rvas.empty())
+                {
+                    LOG_ERROR( "Could not read the executable relocation table, signatures with absolute operands will not match" );
+                }
+                else
+                {
+                    LOG_INFO( "Executable relocation table loaded, {} entries", result.m_Rvas.size() );
+                }
+
+                return result;
+            }();
+
+            return table;
+        }
+
+
+        // Copies 'size' bytes and turns every relocated dword that overlaps them back into the
+        // value stored on disk, so they can be compared with a link time signature.
+        std::vector< std::uint8_t > ReadUnrelocated(
+            std::uintptr_t address,
+            std::size_t size
+        )
+        {
+            std::vector< std::uint8_t > bytes( reinterpret_cast<const std::uint8_t *>(address), reinterpret_cast<const std::uint8_t *>(address) + size );
+
+            if (game::g_ImageDelta == 0)
+                return bytes;
+
+            const RelocTable & table = GetRelocTable();
+
+            if (address < table.m_Base || address - table.m_Base >= table.m_Size)
+                return bytes;
+
+            const auto first_rva = static_cast<std::uint32_t>(address - table.m_Base);
+            const std::uint32_t window_start = first_rva >= 3 ? first_rva - 3 : 0;
+            auto it = std::lower_bound( table.m_Rvas.begin(), table.m_Rvas.end(), window_start );
+
+            for (; it != table.m_Rvas.end() && *it < first_rva + size; ++it)
+            {
+                std::uint32_t value = 0;
+                std::memcpy( &value, reinterpret_cast<const void *>(table.m_Base + *it), sizeof( value ) );
+                value -= static_cast<std::uint32_t>(game::g_ImageDelta);
+
+                for (std::size_t k = 0; k < sizeof( value ); ++k)
+                {
+                    const std::int64_t position = static_cast<std::int64_t>(*it) + static_cast<std::int64_t>(k) - static_cast<std::int64_t>(first_rva);
+
+                    if (position >= 0 && position < static_cast<std::int64_t>(size))
+                    {
+                        bytes[static_cast<std::size_t>(position)] = static_cast<std::uint8_t>(value >> (8 * k));
+                    }
+                }
+            }
+
+            return bytes;
+        }
     }
 
 
@@ -128,7 +270,7 @@ namespace nfs5::hook
         if (bytes.empty() || !IsReadable( address, bytes.size() ))
             return false;
 
-        const auto * memory = reinterpret_cast<const std::uint8_t *>(address);
+        const std::vector< std::uint8_t > memory = ReadUnrelocated( address, bytes.size() );
 
         for (std::size_t i = 0; i < bytes.size(); ++i)
         {

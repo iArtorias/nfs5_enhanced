@@ -20,7 +20,7 @@ namespace nfs5
         using EaThreadCreateFn = HANDLE( __cdecl * )(TimerCallback, SIZE_T, int, int, void *);
         using GameAtExitFn = int( __cdecl * )(TimerCallback);
 
-        constexpr std::uintptr_t GAME_ATEXIT = 0x00557380;
+        constexpr game::GameAddr GAME_ATEXIT = 0x00557380;
         constexpr std::string_view GAME_ATEXIT_SIG = "8B 44 24 04 50 E8 76 B0 04 00";
 
         // EA priority 2 maps to 'THREAD_PRIORITY_HIGHEST' in 'sub_55F8B0'.
@@ -322,7 +322,7 @@ namespace nfs5
         hook::Ref<std::int32_t>( game::var::TIMER_RUNNING ) = frequency;
 
         // Created through the EA thread layer so the thread record matches the original timer thread.
-        const auto create_thread = reinterpret_cast<EaThreadCreateFn>(game::fn::EA_THREAD_CREATE);
+        const auto create_thread = reinterpret_cast<EaThreadCreateFn>(game::fn::EA_THREAD_CREATE.Get());
         HANDLE thread = create_thread( &ThreadProc, 0, EA_PRIORITY_HIGHEST, -1, hook::Ptr<void>( game::var::TIMER_THREAD_RECORD ) );
 
         if (thread == nullptr)
@@ -344,7 +344,7 @@ namespace nfs5
         // Same shutdown registration as the original so exit order is unchanged.
         if (hook::MatchBytes( GAME_ATEXIT, GAME_ATEXIT_SIG ))
         {
-            reinterpret_cast<GameAtExitFn>(GAME_ATEXIT)(reinterpret_cast<TimerCallback>(game::fn::TIMER_SHUTDOWN.m_Address));
+            reinterpret_cast<GameAtExitFn>(GAME_ATEXIT.Get())(reinterpret_cast<TimerCallback>(game::fn::TIMER_SHUTDOWN.m_Address.Get()));
         }
 
         if (::WaitForSingleObject( self.m_FirstTickEvent.Get(), 1000 ) != WAIT_OBJECT_0)

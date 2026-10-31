@@ -303,9 +303,9 @@ namespace nfs5
         LOG_INFO( "  HudScaling Enabled={} ReferenceHeight={} ScaleMultiplier={:.2f} MinimumScale={:.2f} ScaleText={} ExclusiveGaugeStyle={} ScaleLoadingScreen={} SmoothLoadingScreen={}",
             s.m_Hud.m_Enabled, s.m_Hud.m_ReferenceHeight, s.m_Hud.m_ScaleMultiplier, s.m_Hud.m_MinimumScale, s.m_Hud.m_ScaleText,
             s.m_Hud.m_ExclusiveGaugeStyle, s.m_Hud.m_ScaleLoadingScreen, s.m_Hud.m_SmoothLoadingScreen );
-        LOG_INFO( "  IO Enabled={} ReadChunkKB={} CacheDiskFreeSpace={} FastCpuSpeedCheck={}",
+        LOG_INFO( "  IO Enabled={} ReadChunkKB={} CacheDiskFreeSpace={} FastCpuSpeedCheck={} GameplayRedirect={} GameplayRedirectTrace={}",
             s.m_Io.m_Enabled, s.m_Io.m_ReadChunkKB, s.m_Io.m_CacheDiskFreeSpace,
-            s.m_Io.m_FastCpuSpeedCheck );
+            s.m_Io.m_FastCpuSpeedCheck, s.m_Io.m_GameplayRedirect, s.m_Io.m_GameplayRedirectTrace );
         LOG_INFO( "  Detail Enabled={} DrawDistanceScale={:.2f} MinDrawDistance={:.0f} FarClipMultiplier={:.2f} KeepDistantWheels={} FullCarDetail={} TextureDetail={} OcclusionRange={:.0f} LodDistanceScale={:.2f}",
             s.m_Detail.m_Enabled, s.m_Detail.m_DrawDistanceScale, s.m_Detail.m_MinDrawDistance, s.m_Detail.m_FarClipMultiplier, s.m_Detail.m_KeepDistantWheels,
             s.m_Detail.m_FullCarDetail, s.m_Detail.m_TextureDetail, s.m_Detail.m_OcclusionRange,

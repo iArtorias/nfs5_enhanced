@@ -224,7 +224,7 @@ namespace nfs5
     void TextQuality::OnUpload( const std::uint8_t * font )
     {
         namespace text = game::text;
-        if (font == nullptr || ReadField< std::uintptr_t >( font, text::FONT_DRIVER ) != text::FONT_DRIVER_TABLE)
+        if (font == nullptr || ReadField< std::uintptr_t >( font, text::FONT_DRIVER ) != text::FONT_DRIVER_TABLE.Get())
             return;
 
         auto * texture = ReadField< game::FontTexture * >( font, text::FONT_TEXTURE );
