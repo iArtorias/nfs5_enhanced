@@ -494,8 +494,8 @@ namespace nfs5
     )
     {
         const auto capture_list = [this, step](
-            std::uintptr_t list,
-            std::uintptr_t count_address,
+            game::GameAddr list,
+            game::GameAddr count_address,
             std::int32_t capacity
             )
         {

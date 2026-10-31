@@ -13,6 +13,7 @@
 #include <safetyhook.hpp>
 
 #include "../../core/config.h"
+#include "../../game/game_addr.h"
 
 namespace nfs5
 {
@@ -32,8 +33,8 @@ namespace nfs5
 
             bool Apply(
                 const char * name,
-                std::uintptr_t slot,
-                std::uintptr_t expected,
+                game::GameAddr slot,
+                game::GameAddr expected,
                 void * destination
             );
 

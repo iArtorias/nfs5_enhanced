@@ -146,8 +146,8 @@ namespace nfs5
             std::int32_t & height
         )
         {
-            width = reinterpret_cast<ResolutionFn>(game::hud::RESOLUTION_WIDTH)(accessor, nullptr);
-            height = reinterpret_cast<ResolutionFn>(game::hud::RESOLUTION_HEIGHT)(accessor, nullptr);
+            width = reinterpret_cast<ResolutionFn>(game::hud::RESOLUTION_WIDTH.Get())(accessor, nullptr);
+            height = reinterpret_cast<ResolutionFn>(game::hud::RESOLUTION_HEIGHT.Get())(accessor, nullptr);
         }
     }
 
@@ -225,7 +225,7 @@ namespace nfs5
         float y
     ) const
     {
-        const auto set_scale = reinterpret_cast<FontSetScaleFn>(game::hud::FONT_SET_SCALE);
+        const auto set_scale = reinterpret_cast<FontSetScaleFn>(game::hud::FONT_SET_SCALE.Get());
         set_scale( font, x, y );
     }
 
@@ -330,7 +330,7 @@ namespace nfs5
         {
             if (!hook::MatchBytes( read.m_Address, read.m_Signature ))
             {
-                LOG_ERROR( "HUD size read at {:08X} does not match, HUD scaling stays off", read.m_Address );
+                LOG_ERROR( "HUD size read at {:08X} does not match, HUD scaling stays off", read.m_Address.Get() );
                 return false;
             }
         }
