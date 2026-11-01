@@ -60,7 +60,7 @@ target_link_libraries( nfs5_enhanced PRIVATE safetyhook winmm )
 if ( MSVC )
     set( CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" )
     set_property( TARGET nfs5_enhanced Zydis safetyhook PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" )
-    target_compile_options( nfs5_enhanced PRIVATE /W4 /permissive- /Zc:__cplusplus /utf-8 )
+    target_compile_options( nfs5_enhanced PRIVATE /W4 /permissive- /Zc:__cplusplus /utf-8 /WX )
     target_link_options( nfs5_enhanced PRIVATE /SAFESEH:NO )
     # Vendored SafetyHook drops the [[nodiscard]] result of 'vm_protect' in a destructor.
     target_compile_options( safetyhook PRIVATE /wd4834 )
