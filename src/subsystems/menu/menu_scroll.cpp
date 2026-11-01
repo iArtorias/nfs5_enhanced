@@ -384,7 +384,7 @@ namespace nfs5
         {
             void * slider = At<void *>( list, menu::LIST_SLIDER );
             if (slider != nullptr &&
-                *static_cast<std::uintptr_t *>(slider) == menu::LIST_SLIDER_VTABLE)
+                *static_cast<std::uintptr_t *>(slider) == menu::LIST_SLIDER_VTABLE.Get())
             {
                 const int mode = At<int>( slider, 0xEC );
                 const int drag = At<int>( slider, 0xF0 );
@@ -397,8 +397,6 @@ namespace nfs5
                 }
             }
         }
-
-        const int result = reinterpret_cast<ListEventFn>(menu::LIST_MOVE)(list, event);
 
         // With enhanced scrolling disabled, only the vanilla drag fix runs.
         if (!self.m_Settings.m_Scroll)
