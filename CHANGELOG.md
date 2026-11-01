@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Intro and menu movies are enlarged once on the GPU, from the original frame, with a bicubic filter
+  (`MovieFilter`, `MovieSharpness` in `[Dx11]`). The game doubled every frame in software and the
+  graphics driver stretched the result, which left scan lines. The color of a frame is interpolated
+  instead of repeated for two pixels. A movie as wide as the screen fills the window, its black bars
+  cut and its aspect ratio kept (`MovieFill`). Needs the DX11 driver, `Upscale` in the new `[Movie]`
+  section turns it off. Not tested with `ThrashDriver = dx`, where the game keeps scaling the frames.
+
 ### Fixes
 
 - The plugin works when Windows loads `Porsche.exe` at another address than `0x00400000`, for example

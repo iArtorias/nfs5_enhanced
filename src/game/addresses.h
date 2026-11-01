@@ -786,4 +786,17 @@ namespace nfs5::game
         inline constexpr int KEY_PAGE_DOWN = 0x5100;
         inline constexpr int EVENT_KEY = 2;
     }
+
+    namespace movie
+    {
+        // Software blitter of the movie player ['sub_56A920'], cdecl with 6 arguments: x, y, frame,
+        // width, height and mode. The player decodes a frame at the size of the movie into a packed
+        // 4:2:2 buffer with 7 bit components [see 'FromMovieYuv' in the driver] and this routine
+        // converts it to the display format in the locked front buffer. Mode '0' is the movie size,
+        // '1' and '2' double the pixels and '3' doubles with an average of neighbours.
+        inline constexpr Site BLIT =
+        {
+            0x0056A920, "8B 44 24 18 81 EC 18 0A 00 00 85 C0 53 55 56 57"
+        };
+    }
 }
