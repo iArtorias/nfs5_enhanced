@@ -255,6 +255,68 @@ float4 MainPS( PixelIn input ) : SV_Target
 }
 )hlsl";
 
+    // Same vertex stage as PRESENT. The pixel stage enlarges a small movie frame with a bicubic
+    // filter from the Mitchell Netravali family, B = 1 - 2 C, so C = 0.5 is Catmull Rom, 1/3 is
+    // Mitchell and 0 is the soft B spline. 'g_Params.w' is C.
+    inline constexpr char MOVIE[] = R"hlsl(
+cbuffer PresentConstants : register( b0 )
+{
+    float4 g_Rect;
+    float4 g_Params; // brightness, target width, target height, bicubic C
+    float4 g_Source; // source u, v, width, height in texture coordinates
+};
+
+Texture2D g_Texture : register( t0 );
+
+struct PixelIn
+{
+    float4 m_Position : SV_Position;
+    float2 m_Uv : TEXCOORD0;
+};
+
+float4 Weights( float t, float c )
+{
+    const float b = 1.0 - 2.0 * c;
+    const float t2 = t * t;
+    const float t3 = t2 * t;
+    const float4 w = float4(
+        ( -b / 6.0 - c ) * t3 + ( b / 2.0 + 2.0 * c ) * t2 + ( -b / 2.0 - c ) * t + b / 6.0,
+        ( 2.0 - 1.5 * b - c ) * t3 + ( -3.0 + 2.0 * b + c ) * t2 + ( 1.0 - b / 3.0 ),
+        ( -2.0 + 1.5 * b + c ) * t3 + ( 3.0 - 2.5 * b - 2.0 * c ) * t2 + ( b / 2.0 + c ) * t + b / 6.0,
+        ( b / 6.0 + c ) * t3 - c * t2 );
+    return w;
+}
+
+float4 MainPS( PixelIn input ) : SV_Target
+{
+    uint width, height;
+    g_Texture.GetDimensions( width, height );
+    const float2 size = float2( width, height );
+    const float2 position = input.m_Uv * size - 0.5;
+    const float2 base = floor( position );
+    const float2 fraction = position - base;
+    const float4 wx = Weights( fraction.x, g_Params.w );
+    const float4 wy = Weights( fraction.y, g_Params.w );
+    // Rows outside the visible part [black bars cut by the driver] are not sampled.
+    const int2 low = int2( 0, (int)round( g_Source.y * (float)height ) );
+    const int2 high = int2( (int)width - 1, (int)round( ( g_Source.y + g_Source.w ) * (float)height ) - 1 );
+    float3 color = 0.0;
+
+    [unroll]
+    for (int j = 0; j < 4; ++j)
+    {
+        [unroll]
+        for (int i = 0; i < 4; ++i)
+        {
+            const int2 texel = clamp( int2( base ) + int2( i - 1, j - 1 ), low, high );
+            color += g_Texture.Load( int3( texel, 0 ) ).rgb * ( wx[i] * wy[j] );
+        }
+    }
+
+    return float4( saturate( color * g_Params.x ), 1.0 );
+}
+)hlsl";
+
     inline constexpr char CLEAR[] = R"hlsl(
 cbuffer ClearConstants : register( b0 )
 {

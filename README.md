@@ -71,7 +71,7 @@ needed any more. It emulates exactly what the stock driver did, the game itself 
 | Window modes | Borderless window over the whole monitor, exclusive fullscreen at the desktop resolution, or a resizable window. The display never switches to 640x480. |
 | VSync | `On` or `Off`. `Off` presents frames at once, with tearing where the display allows it. |
 | Alt+Tab | The game minimizes when another program is activated and comes back on return. The game no longer pulls itself back in front. |
-| Movies | The intro and menu movies play through the same front buffer path as on the original driver. |
+| Movies | The intro and menu movies are enlarged once on the GPU with a bicubic filter, from the original frame, instead of being doubled in software by the game. This removes the scan lines of the original, and a movie as wide as the screen fills the window with its black bars cut and its aspect ratio kept. `[Movie]` and `MovieFilter`, `MovieSharpness`, `MovieFill` under `[Dx11]` switch each part off. |
 | High DPI | The window is DPI aware, so the picture is not stretched by Windows scaling. |
 | Clean exit | The device is released before the game unloads the driver, so the process always ends. |
 | Fast draw path | Repeated render states no longer split batches, geometry is streamed through ring buffers and pipeline objects are only rebound when they change. The sun glare test copies only the pixels it needs instead of scaling the whole frame down first. |
@@ -209,7 +209,7 @@ Everything is set in `nfs5_enhanced.ini`, and every setting is explained in the 
 |---|---|
 | `[General]` | Log level, coexistence with `SilentPatchNFS90s`. |
 | `[Compat]` | The SilentPatch fixes, the crash fixes, graphics driver selection and fallback. |
-| `[Dx11]` | Internal resolution, antialiasing, anisotropic filtering, window mode and size, VSync, Alt+Tab behaviour. |
+| `[Dx11]` | Internal resolution, antialiasing, anisotropic filtering, window mode and size, VSync, Alt+Tab behaviour, movie filter and fill. |
 | `[Affinity]` | Which threads are pinned and to which core. |
 | `[Timing]` | Precise game clock. |
 | `[Widescreen]` | Hor+, field of view, flares, resolution list, race resolution and color depth, car detail distance. |
@@ -220,6 +220,7 @@ Everything is set in `nfs5_enhanced.ini`, and every setting is explained in the 
 | `[Detail]` | Draw distance, far clip, distant wheels, occlusion range. |
 | `[Controller]` | SDL3 gamepads, rumble, dead zones, default bindings. |
 | `[Menu]` | Mouse wheel and key scrolling of the menu lists. |
+| `[Movie]` | Hands the movie frames to the DX11 driver, which enlarges them. |
 
 Common adjustments:
 
@@ -241,6 +242,9 @@ Common adjustments:
 | The game's own DirectInput controller handling | `Enabled = 0` under `[Controller]` |
 | The original occlusion test near walls | `OcclusionRange = 0` under `[Detail]` |
 | No mouse wheel scrolling in menu lists | `Scroll = 0` under `[Menu]` |
+| Movies as the game scales them | `Upscale = 0` under `[Movie]` |
+| Movies in 4:3, without filling the window | `MovieFill = 0` under `[Dx11]` |
+| Crisper or softer movies | `MovieSharpness = 50` or `20` under `[Dx11]` |
 
 > [!TIP]
 > With interpolation on, the race draws as often as it can. Cap it with `FpsLimit` or with `VSync`

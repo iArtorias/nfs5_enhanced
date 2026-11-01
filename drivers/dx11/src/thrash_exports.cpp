@@ -99,6 +99,22 @@ extern "C"
     }
 
 
+    // Not a THRASH function. The ASI plug-in offers the frames of the movie player to the
+    // driver so they are enlarged at the final resolution. Returns 1 when the frame is drawn.
+    int __stdcall NFS5E_MovieBlit(
+        const void * pixels,
+        int pitch,
+        int width,
+        int height,
+        int x,
+        int y,
+        int scale
+    )
+    {
+        return Get().MovieBlit( pixels, pitch, width, height, x, y, scale ) ? 1 : 0;
+    }
+
+
     int __stdcall THRASH_restore()
     {
         return Get().Restore();
