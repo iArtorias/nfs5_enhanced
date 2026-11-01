@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 
 #include "log.h"
@@ -108,7 +109,7 @@ namespace nfs5::hook
                 std::wstring path( MAX_PATH, L'\0' );
                 path.resize( ::GetModuleFileNameW( nullptr, path.data(), static_cast<DWORD>(path.size()) ) );
 
-                std::ifstream file( path, std::ios::binary );
+                std::ifstream file( std::filesystem::path( path ), std::ios::binary );
                 const IMAGE_SECTION_HEADER * section = IMAGE_FIRST_SECTION( nt );
                 std::vector< std::uint8_t > block;
 

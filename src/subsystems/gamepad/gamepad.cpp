@@ -6,6 +6,7 @@
 
 #include "../../core/hook_util.h"
 #include "../../core/log.h"
+#include "../../core/string_util.h"
 
 #include "../../game/addresses.h"
 
@@ -547,7 +548,7 @@ namespace nfs5
             snapshot.m_Connected = true;
 
             const char * name = m_Sdl.GetGamepadName( active->m_Handle );
-            std::strncpy( snapshot.m_Name, name != nullptr ? name : "Gamepad", sizeof( snapshot.m_Name ) - 1 );
+            CopyString( snapshot.m_Name, name != nullptr ? name : "Gamepad" );
 
             const bool readable = m_Settings.m_BackgroundInput || IsGameActive();
 
