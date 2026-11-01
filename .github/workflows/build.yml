@@ -1,0 +1,16 @@
+name: Build
+
+on:
+  pull_request:
+
+jobs:
+  msvc-win32:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -A Win32
+
+      - name: Build
+        run: cmake --build build --config Release
