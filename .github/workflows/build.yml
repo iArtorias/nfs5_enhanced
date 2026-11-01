@@ -7,7 +7,7 @@ jobs:
   msvc-win32:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configure
         run: cmake -S . -B build -A Win32
