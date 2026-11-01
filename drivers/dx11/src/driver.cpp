@@ -189,6 +189,100 @@ namespace dx11z
             }
         }
 
+        // Frames of the movie player are packed 4:2:2 with 7 bit components, two pixels per 32 bit
+        // word: byte 0 is V, byte 1 is U, byte 2 is Y of the second pixel and byte 3 is Y of the
+        // first. This is the conversion of the game ['sub_56AD70', 'sub_592610'] with a full range
+        // result: the ITU-R BT.601 factors, biases per channel and 2 * field - bias clamped.
+        // The game repeats the color of a pair for both pixels. The color sits between the two
+        // pixels of a pair, so each pixel takes three quarters of its own pair and one quarter of
+        // the neighbor on its side, which removes the color blocks at edges.
+        void FromMovieYuv(
+            const std::uint8_t * source,
+            std::uint32_t source_pitch,
+            std::uint8_t * destination,
+            std::uint32_t destination_pitch,
+            int width,
+            int height
+        )
+        {
+            auto channel = [] ( int field, int bias )
+            {
+                return static_cast<std::uint32_t>(std::clamp( 2 * (field & 0x1FF) - bias, 0, 255 ));
+            };
+
+            const int pairs = width / 2;
+
+            for (int y = 0; y < height; ++y)
+            {
+                const std::uint8_t * row = source + static_cast<std::size_t>( y ) * source_pitch;
+                auto * out = reinterpret_cast<std::uint32_t *>( destination + static_cast<std::size_t>( y ) * destination_pitch );
+
+                for (int pair = 0; pair < pairs; ++pair)
+                {
+                    const std::uint8_t * in = row + pair * 4;
+                    const std::uint8_t * before = row + std::max( pair - 1, 0 ) * 4;
+                    const std::uint8_t * after = row + std::min( pair + 1, pairs - 1 ) * 4;
+                    const int luma[2] = { in[3] & 0x7F, in[2] & 0x7F };
+                    const std::uint8_t * neighbor[2] = { before, after };
+
+                    for (int k = 0; k < 2; ++k)
+                    {
+                        const float v = 0.75f * static_cast<float>(in[0] & 0x7F) + 0.25f * static_cast<float>(neighbor[k][0] & 0x7F);
+                        const float u = 0.75f * static_cast<float>(in[1] & 0x7F) + 0.25f * static_cast<float>(neighbor[k][1] & 0x7F);
+                        const float fv = v - 64.0f + 0.5f;
+                        const float fu = u - 64.0f + 0.5f;
+
+                        const std::uint32_t r = channel( 89 + luma[k] + static_cast<int>(std::lrintf( fv * 1.402f )), 177 );
+                        const std::uint32_t g = channel( 67 + luma[k] + static_cast<int>(std::lrintf( fu * -0.3441f )) + static_cast<int>(std::lrintf( fv * -0.7141f )), 133 );
+                        const std::uint32_t b = channel( 113 + luma[k] + static_cast<int>(std::lrintf( fu * 1.772f )), 225 );
+                        out[pair * 2 + k] = 0xFF000000u | (r << 16) | (g << 8) | b;
+                    }
+                }
+            }
+        }
+
+        // Counts the rows at the top and at the bottom of a movie frame that are black from edge
+        // to edge, the letterbox some movies carry inside the frame. Returns 'false' for a frame
+        // that is black all over, which says nothing about the bars.
+        bool FindMovieBars(
+            const std::uint8_t * source,
+            std::uint32_t source_pitch,
+            int width,
+            int height,
+            int & top,
+            int & bottom
+        )
+        {
+            constexpr int BLACK = 3;
+
+            auto black = [&] ( int y )
+            {
+                const std::uint8_t * in = source + static_cast<std::size_t>( y ) * source_pitch;
+
+                for (int x = 0; x + 1 < width; x += 2, in += 4)
+                {
+                    if ((in[2] & 0x7F) > BLACK || (in[3] & 0x7F) > BLACK)
+                        return false;
+                }
+
+                return true;
+            };
+
+            top = 0;
+            bottom = 0;
+
+            while (top < height && black( top ))
+                ++top;
+
+            if (top == height)
+                return false;
+
+            while (bottom < height - top && black( height - 1 - bottom ))
+                ++bottom;
+
+            return true;
+        }
+
         void FromRgb565(
             const std::uint8_t * source,
             std::uint32_t source_pitch,
@@ -492,6 +586,12 @@ namespace dx11z
 
         m_Device->CreateVertexShader( vs->GetBufferPointer(), vs->GetBufferSize(), nullptr, m_PresentVs.Put() );
         m_Device->CreatePixelShader( ps->GetBufferPointer(), ps->GetBufferSize(), nullptr, m_PresentPs.Put() );
+
+        // Movies fall back to the game's own scaling when this one does not build.
+        if (build( shaders::MOVIE, sizeof( shaders::MOVIE ) - 1, "MainPS", "ps_4_0", ps ))
+        {
+            m_Device->CreatePixelShader( ps->GetBufferPointer(), ps->GetBufferSize(), nullptr, m_MoviePs.Put() );
+        }
 
         if (!build( shaders::CLEAR, sizeof( shaders::CLEAR ) - 1, "MainVS", "vs_4_0", vs ) ||
             !build( shaders::CLEAR, sizeof( shaders::CLEAR ) - 1, "MainPS", "ps_4_0", ps ))
@@ -1068,7 +1168,9 @@ namespace dx11z
         const float * destination_rect,
         const float * source_rect,
         float brightness,
-        ID3D11SamplerState * sampler
+        ID3D11SamplerState * sampler,
+        ID3D11PixelShader * pixel_shader,
+        float shape
     )
     {
         // The blit binds its own targets, shaders and states.
@@ -1081,6 +1183,7 @@ namespace dx11z
         constants.m_Params[0] = brightness;
         constants.m_Params[1] = static_cast<float>(target_width);
         constants.m_Params[2] = static_cast<float>(target_height);
+        constants.m_Params[3] = shape;
 
         D3D11_MAPPED_SUBRESOURCE mapped = {};
         if (SUCCEEDED( m_Context->Map( m_PresentConstants.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped ) ))
@@ -1102,7 +1205,7 @@ namespace dx11z
         m_Context->IASetInputLayout( nullptr );
         m_Context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP );
         m_Context->VSSetShader( m_PresentVs.Get(), nullptr, 0 );
-        m_Context->PSSetShader( m_PresentPs.Get(), nullptr, 0 );
+        m_Context->PSSetShader( pixel_shader != nullptr ? pixel_shader : m_PresentPs.Get(), nullptr, 0 );
 
         ID3D11Buffer * buffer = m_PresentConstants.Get();
         m_Context->VSSetConstantBuffers( 0, 1, &buffer );
@@ -1277,6 +1380,9 @@ namespace dx11z
         m_ConfigVsync = ::GetPrivateProfileIntA( "Dx11", "VSync", 1, ini.c_str() ) != 0;
         m_ConfigMinimize = ::GetPrivateProfileIntA( "Dx11", "MinimizeOnFocusLoss", 1, ini.c_str() ) != 0;
         m_ConfigFogEnabled = ::GetPrivateProfileIntA( "Dx11", "FogEnabled", 1, ini.c_str() ) != 0;
+        m_ConfigMovie = ::GetPrivateProfileIntA( "Dx11", "MovieFilter", 1, ini.c_str() ) != 0;
+        m_ConfigMovieFill = ::GetPrivateProfileIntA( "Dx11", "MovieFill", 1, ini.c_str() ) != 0;
+        m_MovieSharpness = static_cast<float>(std::clamp( static_cast<int>(::GetPrivateProfileIntA( "Dx11", "MovieSharpness", 33, ini.c_str() )), 0, 100 )) / 100.0f;
         m_TraceLines = static_cast<int>(::GetPrivateProfileIntA( "Dx11", "Trace", 0, ini.c_str() ));
 
         Log( "Config ResolutionScale %d Antialiasing %d Anisotropy %d WindowMode %d Window %dx%d", m_ConfigScale, m_ConfigSamples, m_ConfigAnisotropy,
@@ -1493,6 +1599,11 @@ namespace dx11z
         m_SceneLayout.Reset();
         m_PresentVs.Reset();
         m_PresentPs.Reset();
+        m_MoviePs.Reset();
+        m_MovieView.Reset();
+        m_MovieTexture.Reset();
+        m_MovieWidth = 0;
+        m_MovieHeight = 0;
         m_ClearVs.Reset();
         m_ClearPs.Reset();
         m_DrawConstants.Reset();
@@ -1699,6 +1810,14 @@ namespace dx11z
         const float black[4] = { 0, 0, 0, 1 };
         m_Context->ClearRenderTargetView( target, black );
         Blit( m_FrontView.Get(), target, m_BackBufferWidth, m_BackBufferHeight, destination, source, m_Brightness, m_PresentSampler.Get() );
+        PresentBackBuffer();
+    }
+
+
+    void Driver::PresentBackBuffer()
+    {
+        if (!m_SwapChain)
+            return;
 
         // Nothing to show while minimized, a short wait keeps the paused game from spinning.
         if (::IsIconic( m_Window ))
@@ -1791,6 +1910,139 @@ namespace dx11z
         const auto * bits = static_cast<const std::uint8_t *>(m_Lock.m_Bits);
         m_LockSnapshot.assign( bits, bits + static_cast<std::size_t>(m_Lock.m_Pitch) * static_cast<std::size_t>(m_Height) );
         return &m_Lock;
+    }
+
+
+    bool Driver::MovieBlit(
+        const void * pixels,
+        int pitch,
+        int width,
+        int height,
+        int x,
+        int y,
+        int scale
+    )
+    {
+        // Only for a movie drawn into the front buffer.
+        if (!m_ConfigMovie || !m_MoviePs || !m_Front || !IsFrontSelected() || pixels == nullptr || scale < 1 || width < 8 || height < 8 ||
+            width > 2048 || height > 2048 || pitch < width * 2 || (width & 1) != 0)
+        {
+            return false;
+        }
+
+        Flush();
+
+        if (m_MovieWidth != width || m_MovieHeight != height || !m_MovieTexture)
+        {
+            m_MovieView.Reset();
+            m_MovieTexture.Reset();
+
+            D3D11_TEXTURE2D_DESC desc = {};
+            desc.Width = static_cast<UINT>(width);
+            desc.Height = static_cast<UINT>(height);
+            desc.MipLevels = 1;
+            desc.ArraySize = 1;
+            desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            desc.SampleDesc.Count = 1;
+            desc.Usage = D3D11_USAGE_DEFAULT;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+            if (FAILED( m_Device->CreateTexture2D( &desc, nullptr, m_MovieTexture.Put() ) ) ||
+                FAILED( m_Device->CreateShaderResourceView( m_MovieTexture.Get(), nullptr, m_MovieView.Put() ) ))
+            {
+                m_MovieView.Reset();
+                m_MovieTexture.Reset();
+                return false;
+            }
+
+            m_MovieWidth = width;
+            m_MovieHeight = height;
+            m_MovieBarTop = -1;
+            m_MovieBarBottom = -1;
+        }
+
+        // A pause between frames means another movie, its bars are measured again.
+        const DWORD now = ::GetTickCount();
+
+        if (now - m_MovieTick > 500)
+        {
+            m_MovieBarTop = -1;
+            m_MovieBarBottom = -1;
+        }
+
+        m_MovieTick = now;
+
+        if (!m_MovieLogged)
+        {
+            m_MovieLogged = true;
+            Log( "Movie frame %dx%d at %d,%d scale %d, bicubic sharpness %.2f", width, height, x, y, scale, m_MovieSharpness );
+        }
+
+        m_MoviePixels.resize( static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4 );
+        FromMovieYuv( static_cast<const std::uint8_t *>(pixels), static_cast<std::uint32_t>(pitch), m_MoviePixels.data(), static_cast<std::uint32_t>(width) * 4, width, height );
+        m_Context->UpdateSubresource( m_MovieTexture.Get(), 0, nullptr, m_MoviePixels.data(), static_cast<UINT>(width) * 4, 0 );
+
+        // A movie as wide as the screen fills the window, in the aspect ratio of what is left
+        // after the black bars of the frame, the smallest bars seen so far.
+        if (m_ConfigMovieFill && x == 0 && width * scale == m_Width && m_BackBufferView && !::IsIconic( m_Window ))
+        {
+            int top = 0;
+            int bottom = 0;
+
+            if (FindMovieBars( static_cast<const std::uint8_t *>(pixels), static_cast<std::uint32_t>(pitch), width, height, top, bottom ))
+            {
+                const int previous_top = m_MovieBarTop;
+                const int previous_bottom = m_MovieBarBottom;
+                m_MovieBarTop = m_MovieBarTop < 0 ? top : std::min( m_MovieBarTop, top );
+                m_MovieBarBottom = m_MovieBarBottom < 0 ? bottom : std::min( m_MovieBarBottom, bottom );
+
+                if (m_MovieBarTop != previous_top || m_MovieBarBottom != previous_bottom)
+                {
+                    Log( "Movie black bars %d at the top, %d at the bottom", m_MovieBarTop, m_MovieBarBottom );
+                }
+            }
+
+            int cut_top = std::max( m_MovieBarTop, 0 );
+            int cut_bottom = std::max( m_MovieBarBottom, 0 );
+
+            // A frame that is mostly bars is not trusted.
+            if (cut_top + cut_bottom > height / 2)
+            {
+                cut_top = 0;
+                cut_bottom = 0;
+            }
+
+            const int visible = height - cut_top - cut_bottom;
+            const float region[4] = { 0, static_cast<float>(cut_top) / static_cast<float>(height), 1, static_cast<float>(visible) / static_cast<float>(height) };
+
+            const float target_width = static_cast<float>(m_BackBufferWidth);
+            const float target_height = static_cast<float>(m_BackBufferHeight);
+            const float movie_width = static_cast<float>(width * scale);
+            const float movie_height = static_cast<float>(visible * scale);
+            const float fit = std::min( target_width / movie_width, target_height / movie_height );
+            const float fitted_width = std::round( movie_width * fit );
+            const float fitted_height = std::round( movie_height * fit );
+            const float place[4] = { std::floor( (target_width - fitted_width) * 0.5f ), std::floor( (target_height - fitted_height) * 0.5f ), fitted_width, fitted_height };
+
+            const float black[4] = { 0, 0, 0, 1 };
+            m_Context->ClearRenderTargetView( m_BackBufferView.Get(), black );
+            Blit( m_MovieView.Get(), m_BackBufferView.Get(), m_BackBufferWidth, m_BackBufferHeight, place, region, m_Brightness, m_PointSampler.Get(), m_MoviePs.Get(),
+                m_MovieSharpness );
+            PresentBackBuffer();
+            return true;
+        }
+
+        // Edges snap to whole pixels of the frame so the picture has no soft border.
+        const float left = std::round( static_cast<float>(x) * m_ScaleX );
+        const float top = std::round( static_cast<float>(y) * m_ScaleY );
+        const float right = std::round( static_cast<float>(x + width * scale) * m_ScaleX );
+        const float bottom = std::round( static_cast<float>(y + height * scale) * m_ScaleY );
+        const float destination[4] = { left, top, right - left, bottom - top };
+        const float source[4] = { 0, 0, 1, 1 };
+
+        Blit( m_MovieView.Get(), m_FrontTarget.Get(), m_RenderWidth, m_RenderHeight, destination, source, 1.0f, m_PointSampler.Get(), m_MoviePs.Get(), m_MovieSharpness );
+        PresentFront();
+        return true;
     }
 
 
