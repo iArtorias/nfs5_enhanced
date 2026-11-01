@@ -205,12 +205,17 @@ namespace nfs5
         }
         else
         {
-            int width = 0;
-            int height = 0;
-            if (std::swscanf( race_resolution.c_str(), L"%dx%d", &width, &height ) == 2 && width >= 640 && height >= 480)
+            // WIDTHxHEIGHT, text after the height is ignored.
+            const wchar_t * text = race_resolution.c_str();
+            wchar_t * width_end = nullptr;
+            const long width = std::wcstol( text, &width_end, 10 );
+            wchar_t * height_end = nullptr;
+            const long height = (width_end != text && *width_end == L'x') ? std::wcstol( width_end + 1, &height_end, 10 ) : 0;
+
+            if (height_end != nullptr && height_end != width_end + 1 && width >= 640 && height >= 480)
             {
-                s.m_Widescreen.m_RaceWidth = width;
-                s.m_Widescreen.m_RaceHeight = height;
+                s.m_Widescreen.m_RaceWidth = static_cast<int>(width);
+                s.m_Widescreen.m_RaceHeight = static_cast<int>(height);
             }
             else
             {

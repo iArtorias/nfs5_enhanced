@@ -8,6 +8,8 @@
 
 #include <SDL3/SDL_gamepad.h>
 
+#include "../../core/string_util.h"
+
 namespace nfs5::input
 {
     namespace
@@ -533,7 +535,7 @@ namespace nfs5::input
             object.guidType = AXIS_GUIDS[axis];
             object.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis );
             object.dwFlags = DIDOI_ASPECTPOSITION;
-            std::strncpy( object.tszName, AXIS_NAMES[axis], sizeof( object.tszName ) - 1 );
+            CopyString( object.tszName, AXIS_NAMES[axis] );
 
             // The game plays its wheel effects on X and Y.
             if (m_ForceFeedback && (axis == AXIS_X || axis == AXIS_Y))
@@ -553,7 +555,7 @@ namespace nfs5::input
         {
             object.guidType = GUID_POV_TYPE;
             object.dwType = DIDFT_POV | DIDFT_MAKEINSTANCE( 0 );
-            std::strncpy( object.tszName, "D-Pad", sizeof( object.tszName ) - 1 );
+            CopyString( object.tszName, "D-Pad" );
             object.wUsagePage = 1;
             object.wUsage = 0x39;
             return;
@@ -562,7 +564,7 @@ namespace nfs5::input
         const int button = static_cast<int>(offset) - static_cast<int>(OFFSET_BUTTONS);
         object.guidType = GUID_BUTTON_TYPE;
         object.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button );
-        std::strncpy( object.tszName, BUTTON_NAMES[button], sizeof( object.tszName ) - 1 );
+        CopyString( object.tszName, BUTTON_NAMES[button] );
         object.wUsagePage = 9;
         object.wUsage = static_cast<WORD>(button + 1);
     }
@@ -1065,9 +1067,8 @@ namespace nfs5::input
         result.guidInstance = INSTANCE_GUID;
         result.guidProduct = PRODUCT_GUID;
         result.dwDevType = DEVICE_TYPE;
-        std::strncpy( result.tszInstanceName, pad.m_Connected && pad.m_Name[0] != '\0' ? pad.m_Name : DISCONNECTED_NAME,
-            sizeof( result.tszInstanceName ) - 1 );
-        std::strncpy( result.tszProductName, PRODUCT_NAME, sizeof( result.tszProductName ) - 1 );
+        CopyString( result.tszInstanceName, pad.m_Connected && pad.m_Name[0] != '\0' ? pad.m_Name : DISCONNECTED_NAME );
+        CopyString( result.tszProductName, PRODUCT_NAME );
         result.wUsagePage = 1;
         result.wUsage = 5;
         CopySized( result, instance, instance->dwSize );
@@ -1180,22 +1181,22 @@ namespace nfs5::input
         if (index == static_cast<long>(EFFECT_CONSTANT))
         {
             result.dwEffType = DIEFT_CONSTANTFORCE;
-            std::strncpy( result.tszName, "Constant Force", sizeof( result.tszName ) - 1 );
+            CopyString( result.tszName, "Constant Force" );
         }
         else if (index == static_cast<long>(EFFECT_RAMP))
         {
             result.dwEffType = DIEFT_RAMPFORCE;
-            std::strncpy( result.tszName, "Ramp Force", sizeof( result.tszName ) - 1 );
+            CopyString( result.tszName, "Ramp Force" );
         }
         else if (index <= static_cast<long>(EFFECT_PERIODIC_LAST))
         {
             result.dwEffType = DIEFT_PERIODIC;
-            std::strncpy( result.tszName, "Periodic", sizeof( result.tszName ) - 1 );
+            CopyString( result.tszName, "Periodic" );
         }
         else
         {
             result.dwEffType = DIEFT_CONDITION;
-            std::strncpy( result.tszName, "Condition", sizeof( result.tszName ) - 1 );
+            CopyString( result.tszName, "Condition" );
         }
 
         result.dwStaticParams = DIEP_DURATION | DIEP_GAIN | DIEP_AXES | DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS;
