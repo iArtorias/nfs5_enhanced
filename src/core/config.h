@@ -204,6 +204,14 @@ namespace nfs5
         bool m_WheelSelect = true;
     };
 
+    // Intro and menu movies.
+    struct MovieSettings
+    {
+        // Hands the frames of the movie player to the graphics driver, which enlarges them
+        // itself. The stock driver has no such function, the game then keeps scaling them.
+        bool m_Upscale = true;
+    };
+
     struct Settings
     {
         GeneralSettings m_General;
@@ -218,6 +226,7 @@ namespace nfs5
         TextSettings m_Text;
         ControllerSettings m_Controller;
         MenuSettings m_Menu;
+        MovieSettings m_Movie;
     };
 
     class Config

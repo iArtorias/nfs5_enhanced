@@ -280,6 +280,8 @@ namespace nfs5
         if (s.m_Menu.m_WheelRows < 1 || s.m_Menu.m_WheelRows > 20)
             s.m_Menu.m_WheelRows = 3;
         s.m_Menu.m_WheelSelect = ReadBool( L"Menu", L"WheelSelect", true );
+
+        s.m_Movie.m_Upscale = ReadBool( L"Movie", L"Upscale", true );
     }
 
     void Config::Dump() const
@@ -321,5 +323,6 @@ namespace nfs5
             s.m_Controller.m_StickDeadzone, s.m_Controller.m_TriggerDeadzone, s.m_Controller.m_BackgroundInput,
             s.m_Controller.m_TriggerBindings );
         LOG_INFO( "  Menu Scroll={} WheelRows={} WheelSelect={}", s.m_Menu.m_Scroll, s.m_Menu.m_WheelRows, s.m_Menu.m_WheelSelect );
+        LOG_INFO( "  Movie Upscale={}", s.m_Movie.m_Upscale );
     }
 }

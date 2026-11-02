@@ -41,3 +41,4 @@ EXPORTS
     _THRASH_unlockwindow@4 = _THRASH_unlockwindow@4
     _THRASH_window@4 = _THRASH_window@4
     _THRASH_writerect@20 = _THRASH_writerect@20
+    NFS5E_MovieBlit = _NFS5E_MovieBlit@28
