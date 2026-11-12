@@ -212,6 +212,14 @@ namespace nfs5
         bool m_Upscale = true;
     };
 
+    // Sound.
+    struct AudioSettings
+    {
+        // On mirrored tracks a car seen on the left is heard on the right. The game mirrors the
+        // right axis of the listener and the sound functions mirror the car position once more.
+        bool m_MirrorPanFix = true;
+    };
+
     struct Settings
     {
         GeneralSettings m_General;
@@ -227,6 +235,7 @@ namespace nfs5
         ControllerSettings m_Controller;
         MenuSettings m_Menu;
         MovieSettings m_Movie;
+        AudioSettings m_Audio;
     };
 
     class Config

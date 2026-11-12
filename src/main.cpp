@@ -44,6 +44,7 @@ namespace nfs5
         // the subsystems may touch game memory, also when they uninstall.
         std::atomic< bool > s_Hooked = false;
         hook::BytePatch s_CdCheckPatch;
+        hook::BytePatch s_MirrorPanPatch;
 
         // Turns the 'je' after the 'fe.txt' probe in the CD search into a 'jmp'.
         void SkipCdCheck()
@@ -73,6 +74,23 @@ namespace nfs5
 
             constexpr std::uint8_t JMP_SHORT[] = { 0xEB };
             s_CdCheckPatch.Apply( "SkipCdCheck", branch, "74 BB", JMP_SHORT );
+        }
+
+        // Keeps the listener unmirrored, the sound functions then mirror the car position once.
+        // Turns the 'je' over the negation of the right listener axis into a 'jmp'.
+        void FixMirrorPan()
+        {
+            namespace fn = game::fn;
+            const std::uintptr_t branch = (fn::MIRROR_LISTENER.m_Address + fn::MIRROR_LISTENER_BRANCH).Get();
+
+            if (!hook::MatchBytes( fn::MIRROR_LISTENER.m_Address, fn::MIRROR_LISTENER.m_Signature ))
+            {
+                LOG_ERROR( "Mirror listener site does not match, stereo stays swapped on mirrored tracks" );
+                return;
+            }
+
+            constexpr std::uint8_t JMP_SHORT[] = { 0xEB };
+            s_MirrorPanPatch.Apply( "MirrorPanFix", branch, "74 16", JMP_SHORT );
         }
 
 
@@ -191,6 +209,9 @@ namespace nfs5
 
             if (settings.m_Compat.m_SkipCdCheck)
                 SkipCdCheck();
+
+            if (settings.m_Audio.m_MirrorPanFix)
+                FixMirrorPan();
 
             const bool silent_loaded = FindSilentPatch() != nullptr;
             const bool skip_compat = silent_loaded && settings.m_General.m_SkipOnSilentPatch;
