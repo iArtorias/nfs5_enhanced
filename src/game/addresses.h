@@ -80,6 +80,15 @@ namespace nfs5::game
 
         inline constexpr std::size_t CD_CHECK_BRANCH = 2;
 
+        // Listener axes of the sound, 'mov ecx, [MIRROR]', 'test ecx, ecx', 'je' over the
+        // negation of the right axis.
+        inline constexpr Site MIRROR_LISTENER =
+        {
+            0x0046564F, "8B 0D 2C 74 65 00 85 C9 74 16 D9 00 D9 E0 D9 18"
+        };
+
+        inline constexpr std::size_t MIRROR_LISTENER_BRANCH = 8;
+
         // 'THRASH_opendll' returns nonzero on success.
         inline constexpr Site THRASH_OPEN_DLL =
         {
