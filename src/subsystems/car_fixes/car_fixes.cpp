@@ -1,6 +1,10 @@
 #include "car_fixes.h"
 
+#include <algorithm>
 #include <cmath>
+#include <numeric>
+#include <random>
+#include <vector>
 #include <cstring>
 #include <utility>
 
@@ -544,6 +548,28 @@ namespace nfs5
         m_WetTireTablePatched = false;
     }
 
+    void CarFixes::UsedCarCandidateHook( safetyhook::Context & context )
+    {
+        // EBX selects the model for both the eligibility check and offer creation.
+        // Shuffle indices only. Other dealer screens share the actual catalog.
+        static thread_local std::vector<std::uint32_t> order;
+        if (context.ebx == 0)
+        {
+            static thread_local std::mt19937 rng( ::GetTickCount() );
+            order.resize( context.ebp );
+            std::iota( order.begin(), order.end(), 0u );
+            std::shuffle( order.begin(), order.end(), rng );
+        }
+        context.ebx = order[context.ebx];
+    }
+
+    void CarFixes::UsedCarAdvanceHook( safetyhook::Context & context )
+    {
+        // The game's stack local still holds the sequential index. All paths,
+        // including a failed spawn or a vector reallocation, join here.
+        context.ebx = *reinterpret_cast<const std::uint32_t *>(context.esp + 0x10);
+    }
+
     bool CarFixes::Install(
         const CarFixesSettings & settings
     )
@@ -559,6 +585,24 @@ namespace nfs5
 
         if (m_Installed)
             return true;
+
+        if (settings.m_FixUsedCarAgeGap)
+        {
+            constexpr std::uint8_t thresholds[] = { 54,0,0,0, 54,0,0,0, 54,0,0,0, 54,0,0,0 };
+            const auto & site = cf::USED_CAR_AGE_7_TO_10;
+            m_UsedCarAgePatch.Apply( "FixUsedCarAgeGap", site.m_Address, site.m_Signature, thresholds );
+        }
+
+        if (settings.m_ShuffleUsedCarCandidates)
+        {
+            const auto & advance = cf::USED_CAR_ADVANCE;
+            const auto & candidate = cf::USED_CAR_CANDIDATE;
+            m_UsedCarAdvanceHook = hook::CreateMid( "UsedCarAdvance", advance.m_Address, advance.m_Signature, &UsedCarAdvanceHook );
+            if (m_UsedCarAdvanceHook)
+                m_UsedCarCandidateHook = hook::CreateMid( "UsedCarCandidate", candidate.m_Address, candidate.m_Signature, &UsedCarCandidateHook );
+            if (!m_UsedCarCandidateHook)
+                m_UsedCarAdvanceHook.reset();
+        }
 
         if (settings.m_FixPartBugs || settings.m_FixPartQuirks)
         {
@@ -663,6 +707,9 @@ namespace nfs5
         if (!m_Installed)
             return;
 
+        m_UsedCarCandidateHook.reset();
+        m_UsedCarAdvanceHook.reset();
+        m_UsedCarAgePatch.Restore();
         RestoreWetTireTable();
         m_SetupRideHeightPostHook.reset();
         m_SetupRideHeightPreHook.reset();
