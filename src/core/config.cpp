@@ -282,6 +282,15 @@ namespace nfs5
         s.m_Menu.m_WheelSelect = ReadBool( L"Menu", L"WheelSelect", true );
 
         s.m_Movie.m_Upscale = ReadBool( L"Movie", L"Upscale", true );
+
+        s.m_CarFixes.m_Enabled = ReadBool( L"CarFixes", L"Enabled", true );
+        s.m_CarFixes.m_FixCarDatabase = ReadBool( L"CarFixes", L"FixCarDatabase", true );
+        s.m_CarFixes.m_FixPartBugs = ReadBool( L"CarFixes", L"FixPartBugs", true );
+        s.m_CarFixes.m_FixPartQuirks = ReadBool( L"CarFixes", L"FixPartQuirks", true );
+        s.m_CarFixes.m_FixSuperchargerFlag = ReadBool( L"CarFixes", L"FixSuperchargerFlag", true );
+        s.m_CarFixes.m_FixEngineSwaps = ReadBool( L"CarFixes", L"FixEngineSwaps", true );
+        s.m_CarFixes.m_FixSpringLowering = ReadBool( L"CarFixes", L"FixSpringLowering", true );
+        s.m_CarFixes.m_FixWetTireTable = ReadBool( L"CarFixes", L"FixWetTireTable", true );
     }
 
     void Config::Dump() const
@@ -324,5 +333,9 @@ namespace nfs5
             s.m_Controller.m_TriggerBindings );
         LOG_INFO( "  Menu Scroll={} WheelRows={} WheelSelect={}", s.m_Menu.m_Scroll, s.m_Menu.m_WheelRows, s.m_Menu.m_WheelSelect );
         LOG_INFO( "  Movie Upscale={}", s.m_Movie.m_Upscale );
+        LOG_INFO( "  CarFixes Enabled={} FixCarDatabase={} FixPartBugs={} FixPartQuirks={} FixSuperchargerFlag={} FixEngineSwaps={} FixSpringLowering={} FixWetTireTable={}",
+            s.m_CarFixes.m_Enabled, s.m_CarFixes.m_FixCarDatabase, s.m_CarFixes.m_FixPartBugs,
+            s.m_CarFixes.m_FixPartQuirks, s.m_CarFixes.m_FixSuperchargerFlag, s.m_CarFixes.m_FixEngineSwaps,
+            s.m_CarFixes.m_FixSpringLowering, s.m_CarFixes.m_FixWetTireTable );
     }
 }
