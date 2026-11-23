@@ -130,6 +130,39 @@ namespace nfs5
         // Intentionally empty, the game used 'keybd_event' to force Caps Num and Scroll Lock off.
     }
 
+    void SilentCompat::CardActionHook( safetyhook::Context & context )
+    {
+        using namespace game::post_race;
+        auto & consumed = GetInstance().m_CardSpaceConsumed;
+        if (!(context.edx & 0xFF))
+        {
+            consumed.store( false );
+            return;
+        }
+
+        // Other HUD polls ignore the returned action. Only consume a press in the
+        // dispatcher that will actually advance the front card. The mouse has priority.
+        if (hook::Ref<std::uintptr_t>( context.esp ) != FRONT_CARD_CALLER.Get() ||
+            (hook::Ref<std::uint8_t>( MOUSE_BUTTONS ) & 2))
+            return;
+
+        const auto card = context.ecx;
+        const auto table = hook::Ref<std::uintptr_t>( card );
+        for (const auto candidate : CARD_TABLES)
+        {
+            if (table == candidate.Get())
+            {
+                // Mouse polling can clear HOverlay's shared latch between cards.
+                // Decide the Space action once for this press across the whole queue.
+                context.eax = hook::Ref<std::uint8_t>( card + 8 ) && !consumed.exchange( true )
+                    ? 0x19 : 0;
+                context.eip = ACTION_RETURN.m_Address.Get();
+                return;
+            }
+        }
+    }
+
+
     LRESULT __stdcall SilentCompat::WndProcHook(
         HWND window,
         UINT message,
@@ -138,6 +171,10 @@ namespace nfs5
     )
     {
         SilentCompat & self = GetInstance();
+
+        // Catch releases even during the transition between two cards.
+        if (message == WM_KILLFOCUS || ((message == WM_KEYUP || message == WM_SYSKEYUP) && w_param == VK_SPACE))
+            self.m_CardSpaceConsumed.store( false );
 
         if (self.m_Settings.m_ClipboardPaste && message == WM_CHAR && w_param == 0x16)
         {
@@ -409,11 +446,21 @@ namespace nfs5
             ok &= m_LockKeyHook != nullptr;
         }
 
-        if (settings.m_ClipboardPaste || settings.m_ClearKeysOnFocusLoss)
+        if (settings.m_ClipboardPaste || settings.m_ClearKeysOnFocusLoss || settings.m_FixPostRaceCardSkip)
         {
             m_WndProcHook = hook::CreateInline( "GameWndProc", fn::GAME_WND_PROC.m_Address, fn::GAME_WND_PROC.m_Signature,
                 reinterpret_cast<void *>(&WndProcHook) );
             ok &= m_WndProcHook != nullptr;
+        }
+
+        if (settings.m_FixPostRaceCardSkip && m_WndProcHook)
+        {
+            if (hook::MatchBytes( post_race::ACTION_RETURN.m_Address, post_race::ACTION_RETURN.m_Signature ))
+            {
+                m_CardActionHook = hook::CreateMid( "PostRaceCardSpace", post_race::CARD_ACTION.m_Address,
+                    post_race::CARD_ACTION.m_Signature, &CardActionHook );
+            }
+            ok &= m_CardActionHook != nullptr;
         }
 
         if (settings.m_FixDeviceEnumeration)
@@ -468,6 +515,8 @@ namespace nfs5
         m_GetProcAddressPatch.Restore();
         m_ThrashUnlockPatch.Restore();
         m_EnumDevicesHook.reset();
+        m_CardActionHook.reset();
+        m_CardSpaceConsumed.store( false );
         m_WndProcHook.reset();
         m_LockKeyHook.reset();
         m_KeyDownHook.reset();

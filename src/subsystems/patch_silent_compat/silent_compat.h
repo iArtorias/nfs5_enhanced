@@ -4,6 +4,7 @@
 // Byte patches from the original were replaced with hooks on the verified
 // routines that contained them.
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 
@@ -22,6 +23,10 @@ namespace nfs5
         std::unique_ptr<safetyhook::InlineHook> m_LockKeyHook;
         std::unique_ptr<safetyhook::InlineHook> m_WndProcHook;
         std::unique_ptr<safetyhook::MidHook> m_EnumDevicesHook;
+        std::unique_ptr<safetyhook::MidHook> m_CardActionHook;
+        std::atomic_bool m_CardSpaceConsumed{ false };
+        static void CardActionHook( safetyhook::Context & context );
+
         hook::CallSitePatch m_ThrashUnlockPatch;
         hook::IatPatch m_GetProcAddressPatch;
         std::unique_ptr<safetyhook::InlineHook> m_GimmeShapeHook;
