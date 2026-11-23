@@ -282,6 +282,8 @@ namespace nfs5
         s.m_Menu.m_WheelSelect = ReadBool( L"Menu", L"WheelSelect", true );
 
         s.m_Movie.m_Upscale = ReadBool( L"Movie", L"Upscale", true );
+
+        s.m_Audio.m_MirrorPanFix = ReadBool( L"Audio", L"MirrorPanFix", true );
     }
 
     void Config::Dump() const
@@ -324,5 +326,6 @@ namespace nfs5
             s.m_Controller.m_TriggerBindings );
         LOG_INFO( "  Menu Scroll={} WheelRows={} WheelSelect={}", s.m_Menu.m_Scroll, s.m_Menu.m_WheelRows, s.m_Menu.m_WheelSelect );
         LOG_INFO( "  Movie Upscale={}", s.m_Movie.m_Upscale );
+        LOG_INFO( "  Audio MirrorPanFix={}", s.m_Audio.m_MirrorPanFix );
     }
 }
