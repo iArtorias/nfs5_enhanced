@@ -1,13 +1,41 @@
 # Changelog
 
-## Unreleased
+## 1.4.0 (2026-11-23)
 
+- NFS5 Essentials V2 by ND4SPD Racer is included as a data overlay in the new `GameplayFixes` folder,
+  which goes next to `Porsche.exe`. The game reads files under `FEData` and `GameData` from there when
+  an override exists, the original files on disk stay untouched. It brings the official addon cars
+  911 GT2, 911 GT3, 928 GTS and 959, fixed car textures and palettes, the corrected km/h speedometer
+  at night and the Essentials `nfs5.car` and `nfs5.prt`, with their balance, price and tuning changes.
+  `GameplayRedirect` in `[IO]` turns it off, `GameplayRedirectTrace` logs every redirected file.
+  Details, checksums and credits are in `docs/ESSENTIALS_V2_INTEGRATION.md`.
+- New `[CarFixes]` section, fixes to the car and part data applied in memory after loading. Entries
+  that a data pack such as `GameplayFixes` already corrected are left alone.
+  - `FixCarDatabase`: the '96 911 Carrera 4S (993) pointed at a misspelled sim file and drove with
+    `default.sim`. The dash and camera offsets of the '92 928 GTS are restored when an older add-on
+    pack overwrote them.
+  - `FixPartBugs`: the 996 Stage 4 supercharger had a torque value of 1110 instead of 110 at 7500 RPM
+    (about 1065 HP), the 930 Turbo High Performance Exhaust had an all zero torque curve, and the
+    Heavy Duty Shocks were a downgrade.
+  - `FixPartQuirks`: stray drag on the 356 Street Performance Springs and 356A 1300 engine upgrade,
+    the Boxster hardtop cut drag by 20% (now 2%), 944 Bumpers #2 had no downforce, the 993 Extra
+    Stiff Sway Bar weight and the grip of the 993 slicks.
+  - `FixSuperchargerFlag`: supercharger kits never set the forced induction flag, the game looked for
+    the subcategory `Supercharged` while the parts say `Supercharger`.
+  - `FixEngineSwaps`: an engine swap updates the redline, and is applied before the engine bolt-ons,
+    so the order of the part slots no longer wipes their torque gains.
+  - `FixSpringLowering`: the ride height slider of the car setup no longer undoes the lowering of
+    the springs.
+  - `FixWetTireTable`: slicks lose grip on wet asphalt instead of keeping their dry bonus, and rain
+    tires stay at least as good as stock tires on wet dirt, grass and snow.
 - Intro and menu movies are enlarged once on the GPU, from the original frame, with a bicubic filter
   (`MovieFilter`, `MovieSharpness` in `[Dx11]`). The game doubled every frame in software and the
   graphics driver stretched the result, which left scan lines. The color of a frame is interpolated
   instead of repeated for two pixels. A movie as wide as the screen fills the window, its black bars
   cut and its aspect ratio kept (`MovieFill`). Needs the DX11 driver, `Upscale` in the new `[Movie]`
   section turns it off. Not tested with `ThrashDriver = dx`, where the game keeps scaling the frames.
+- The included ini forces 16x anisotropic filtering (`Anisotropy` in `[Dx11]`), it used to leave it
+  to the game.
 
 ### Fixes
 
@@ -17,6 +45,27 @@
   signatures ignore operands the loader relocated. The build is still identified by timestamp and image size.
 - Interpolation did not install on some copies of `Porsche.exe` because the signature of the
   render call site compared the call target. The target is no longer part of the signature.
+- The DX11 driver computed exponential fog from the depth buffer value instead of the distance to
+  the eye, so its density did not match the stock driver. New `FogEnabled` in `[Dx11]` turns fog off.
+- Projected headlight beams flickered against the road surface with the DX11 driver, they are now
+  drawn with a small depth bias.
+- Scenery floated in the air with a raised draw distance. One of the two object limits that 1.2.0
+  tied to the draw distance keeps its stock value again, and the occlusion range is measured to the
+  center of an object instead of its edge.
+- The bumper camera of the 911 GT1 had the wrong perspective, patch 3.5 sends that view to the routine
+  of another camera. The original routine is restored for the GT1 only, every other car and modified
+  car data keep the camera of 3.5.
+- A menu scroll bar could stay in drag mode after the mouse button was released outside of it, and
+  the list kept following the mouse. This is fixed with `Scroll = 0` as well.
+- On mirrored tracks the stereo was swapped, a car passing on the left was heard on the right. The game
+  mirrors the listener as well as every car, and the two cancel out. Now only the cars are mirrored,
+  new `MirrorPanFix` in the new `[Audio]` section.
+- An unsupported `Porsche.exe` no longer has its memory touched when the game exits, and the Thrash
+  driver leak fix is applied again when the game reloads the driver.
+
+Thanks to [TheGooselinger](https://github.com/TheGooselinger), [glauberlima](https://github.com/glauberlima),
+[L0calH0rst](https://github.com/L0calH0rst) and [properly-strawberry](https://github.com/properly-strawberry)
+for the contributions.
 
 ## 1.3.0 (2026-10-23)
 
