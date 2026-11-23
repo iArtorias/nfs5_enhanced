@@ -112,6 +112,22 @@ namespace nfs5::parts_catalog
             GroupRows(*reinterpret_cast<PartList *>(context.eax));
         }
 
+        // Parts.InstallList sorts pointers to entries that carry the part and its
+        // installed flag. Its comparator receives the parts, then the game swaps
+        // the complete entries. The original comparison breaks ties within a tier.
+        bool __fastcall SetupPartLess(Part left, void *, Part right)
+        {
+            if (IsEngine(left) && IsEngine(right))
+            {
+                const auto a = SortKey(left);
+                const auto b = SortKey(right);
+                if (a != b)
+                    return a < b;
+            }
+            using Compare = bool (__thiscall *)(Part, Part);
+            return reinterpret_cast<Compare>(game::GameAddr(0x49C350).Get())(left, right);
+        }
+
         int Heading(Part part)
         {
             if (IsEngine(part))
@@ -146,6 +162,13 @@ namespace nfs5::parts_catalog
             {0x515A26, "E8 35 33 00 00", reinterpret_cast<void *>(&Heading)},
             {0x515C61, "E8 FA 30 00 00", reinterpret_cast<void *>(&Heading)},
             {0x515C69, "E8 F2 30 00 00", reinterpret_cast<void *>(&Heading)},
+            // Car Setup inventory has its own list builder, drawing and row heights.
+            {0x5168F7, "E8 54 5A F8 FF", reinterpret_cast<void *>(&SetupPartLess)},
+            {0x516984, "E8 D7 23 00 00", reinterpret_cast<void *>(&Heading)},
+            {0x51698E, "E8 CD 23 00 00", reinterpret_cast<void *>(&Heading)},
+            {0x51699E, "E8 BD 23 00 00", reinterpret_cast<void *>(&Heading)},
+            {0x516B1C, "E8 3F 22 00 00", reinterpret_cast<void *>(&Heading)},
+            {0x516B26, "E8 35 22 00 00", reinterpret_cast<void *>(&Heading)},
             {0x518E3E, "E8 8D 78 FC FF", reinterpret_cast<void *>(&HeadingText)},
         };
         hook::CallSitePatch patches[std::size(calls)];
