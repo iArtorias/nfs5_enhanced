@@ -47,6 +47,13 @@ namespace nfs5
         std::int32_t m_RealHeight = 0;
         bool m_Installed = false;
 
+        std::unique_ptr<safetyhook::MidHook> m_LapTextBeginHook;
+        std::unique_ptr<safetyhook::MidHook> m_LapTextEndHook;
+        void * m_LapFont = nullptr;
+        FontScale m_LapFontScale;
+        static void LapTextBegin( safetyhook::Context & context );
+        static void LapTextEnd( safetyhook::Context & context );
+
         HudScaling() = default;
 
         static void ModeWriteMidHook(
