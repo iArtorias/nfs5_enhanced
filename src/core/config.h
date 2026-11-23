@@ -36,6 +36,7 @@ namespace nfs5
         // 'THRASH_readrect' has no bounds check, the sun glare test reads 4x4 pixels around
         // the projected sun and runs off the frame when the sun is at the screen edge.
         bool m_FixScreenReadback = true;
+        bool m_FixPostRaceCardSkip = true;
 
         // Start without the game CD, applied even when 'SilentPatchNFS90s' is loaded.
         bool m_SkipCdCheck = true;

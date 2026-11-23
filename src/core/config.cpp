@@ -170,6 +170,7 @@ namespace nfs5
         s.m_General.m_SkipOnSilentPatch = ReadBool( L"General", L"SkipCompatIfSilentPatchLoaded", true );
 
         s.m_Compat.m_Enabled = ReadBool( L"Compat", L"Enabled", true );
+        s.m_Compat.m_FixPostRaceCardSkip = ReadBool( L"Compat", L"FixPostRaceCardSkip", true );
         s.m_Compat.m_AltF4 = ReadBool( L"Compat", L"AltF4", true );
         s.m_Compat.m_KeepLockKeys = ReadBool( L"Compat", L"KeepLockKeys", true );
         s.m_Compat.m_FixDeviceEnumeration = ReadBool( L"Compat", L"FixDeviceEnumeration", true );

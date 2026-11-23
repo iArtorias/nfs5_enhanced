@@ -19,6 +19,17 @@ namespace nfs5::game
         std::string_view m_Signature;
     };
 
+    namespace post_race
+    {
+        // HOverlay input, after the Escape check. DL still holds the game's Space state.
+        inline constexpr Site CARD_ACTION = { 0x0042A423, "F6 05 40 64 6A 00 02 74 AC" };
+        inline constexpr Site ACTION_RETURN = { 0x0042A3F5, "C2 0C 00" };
+        inline constexpr GameAddr FRONT_CARD_CALLER = 0x00425FA6;
+        inline constexpr GameAddr MOUSE_BUTTONS = 0x006A6440;
+        // HCongrats, HRaceSummary, HTournamentStandings, HTrackRecords and HWinnings.
+        inline constexpr GameAddr CARD_TABLES[] = { 0x005B2A40, 0x005B2E60, 0x005B3210, 0x005B32B0, 0x005B34D8 };
+    }
+
     namespace fn
     {
         // EAGL camera 'SetPerspective'.
