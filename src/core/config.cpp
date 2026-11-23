@@ -276,6 +276,7 @@ namespace nfs5
         s.m_Controller.m_BackgroundInput = ReadBool( L"Controller", L"BackgroundInput", false );
         s.m_Controller.m_TriggerBindings = ReadBool( L"Controller", L"TriggerBindings", true );
 
+        s.m_Menu.m_GroupEngineParts = ReadBool( L"Menu", L"GroupEngineParts", true );
         s.m_Menu.m_Scroll = ReadBool( L"Menu", L"Scroll", true );
         s.m_Menu.m_WheelRows = ReadInt( L"Menu", L"WheelRows", 3 );
         if (s.m_Menu.m_WheelRows < 1 || s.m_Menu.m_WheelRows > 20)
