@@ -811,6 +811,10 @@ namespace nfs5::game
 
     namespace car_fixes
     {
+        // Each signed short branch skips the garage-full message after the dealer's funds check.
+        inline constexpr Site NEW_CAR_GARAGE_LIMIT = { 0x00501D92, "7C 07 BE 3D 00 00 00 EB AB" };
+        inline constexpr Site USED_CAR_GARAGE_LIMIT = { 0x00501FD6, "7C 07 BE 3D 00 00 00 EB AC" };
+
         // 'CCarParts' loader ['sub_49C3A0'], cdecl void. Loads 'nfs5.prt' into a contiguous heap
         // buffer of 360 byte records stored at 'PARTS_DATA' with count at 'PARTS_COUNT'.
         inline constexpr Site PARTS_LOAD =

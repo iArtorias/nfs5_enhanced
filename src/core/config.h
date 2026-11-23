@@ -240,6 +240,7 @@ namespace nfs5
 
         // Rebalance the wet-weather tire surface grip table in 'Porsche.exe'.
         bool m_FixWetTireTable = true;
+        bool m_RemoveGaragePurchaseLimit = true;
     };
   
     // Sound.

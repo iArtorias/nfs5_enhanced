@@ -560,6 +560,16 @@ namespace nfs5
         if (m_Installed)
             return true;
 
+        if (settings.m_RemoveGaragePurchaseLimit)
+        {
+            constexpr std::uint8_t jump[] = { 0xEB };
+            const auto & newDealer = cf::NEW_CAR_GARAGE_LIMIT;
+            const auto & usedDealer = cf::USED_CAR_GARAGE_LIMIT;
+            if (m_NewCarGarageLimit.Apply( "NewCarGarageLimit", newDealer.m_Address, newDealer.m_Signature, jump ) &&
+                !m_UsedCarGarageLimit.Apply( "UsedCarGarageLimit", usedDealer.m_Address, usedDealer.m_Signature, jump ))
+                m_NewCarGarageLimit.Restore();
+        }
+
         if (settings.m_FixPartBugs || settings.m_FixPartQuirks)
         {
             m_LoadPartsHook = hook::CreateInline(
@@ -663,6 +673,8 @@ namespace nfs5
         if (!m_Installed)
             return;
 
+        m_UsedCarGarageLimit.Restore();
+        m_NewCarGarageLimit.Restore();
         RestoreWetTireTable();
         m_SetupRideHeightPostHook.reset();
         m_SetupRideHeightPreHook.reset();

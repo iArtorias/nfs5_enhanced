@@ -25,6 +25,8 @@ namespace nfs5
     private:
 
         CarFixesSettings m_Settings;
+        hook::BytePatch m_NewCarGarageLimit;
+        hook::BytePatch m_UsedCarGarageLimit;
         std::unique_ptr<safetyhook::InlineHook> m_LoadPartsHook;
         hook::CallSitePatch m_CarListPostLoadCall;
         hook::BytePatch m_SuperchargerStrPatch;

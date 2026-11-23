@@ -290,6 +290,7 @@ namespace nfs5
         s.m_CarFixes.m_FixSuperchargerFlag = ReadBool( L"CarFixes", L"FixSuperchargerFlag", true );
         s.m_CarFixes.m_FixEngineSwaps = ReadBool( L"CarFixes", L"FixEngineSwaps", true );
         s.m_CarFixes.m_FixSpringLowering = ReadBool( L"CarFixes", L"FixSpringLowering", true );
+        s.m_CarFixes.m_RemoveGaragePurchaseLimit = ReadBool( L"CarFixes", L"RemoveGaragePurchaseLimit", true );
         s.m_CarFixes.m_FixWetTireTable = ReadBool( L"CarFixes", L"FixWetTireTable", true );
         s.m_Audio.m_MirrorPanFix = ReadBool( L"Audio", L"MirrorPanFix", true );
     }
