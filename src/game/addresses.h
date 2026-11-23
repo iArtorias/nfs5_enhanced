@@ -509,6 +509,14 @@ namespace nfs5::game
             0x0041A4AE, "A1 EC C7 60 00"
         };
 
+        // HTrackMap draws the label, total, and current lap through the immediate
+        // branch of HTextVisual. The return address identifies the individual visual.
+        inline constexpr GameAddr LAP_LABEL_RETURN = 0x00432ED8;
+        inline constexpr GameAddr LAP_TOTAL_RETURN = 0x00432F7E;
+        inline constexpr GameAddr LAP_CURRENT_RETURN = 0x00433051;
+        inline constexpr Site DIRECT_TEXT_BEGIN = { 0x00431369, "E8 32 56 10 00" };
+        inline constexpr Site DIRECT_TEXT_END = { 0x0043136E, "5F 5E 5B 83 C4 1C C2 10 00" };
+
         // Race loading screen, composed into a 640x480 window and blitted centred at 1:1.
         inline constexpr Site LOADING_BLIT_CALL =
         {

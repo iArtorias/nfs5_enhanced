@@ -290,6 +290,53 @@ namespace nfs5
     }
 
 
+    void HudScaling::LapTextBegin( safetyhook::Context & context )
+    {
+        namespace hud = game::hud;
+        HudScaling & self = GetInstance();
+        // HTextVisual::Draw has 0x1C bytes of locals, three saved registers
+        // and three font draw arguments on the stack at this call.
+        const auto caller = hook::Ref<std::uintptr_t>( context.esp + 0x34 );
+        if (caller != hud::LAP_LABEL_RETURN.Get() && caller != hud::LAP_TOTAL_RETURN.Get() &&
+            caller != hud::LAP_CURRENT_RETURN.Get())
+            return;
+
+        if (IsOne( self.m_FactorX ) && IsOne( self.m_FactorY ))
+            return;
+
+        // The current lap and slash share one draw. The total starts a new
+        // draw, so its origin needs extra spacing as the glyphs grow. The x
+        // argument here moves the text in screen pixels.
+        if (self.m_FactorX > 1.0f)
+        {
+            float & x = hook::Ref<float>( context.esp );
+            if (caller == hud::LAP_CURRENT_RETURN.Get())
+                x -= 1.0f;
+            else if (caller == hud::LAP_TOTAL_RETURN.Get())
+                x += std::round( 3.0f * (self.m_FactorX - 1.0f) );
+        }
+
+        // FONT_SET_SCALE writes properties 2 and 3 on the underlying font.
+        // Preserve its actual scale, including settings made outside the HUD queue.
+        const auto data = hook::Ref<std::uintptr_t>( context.ecx + 4 );
+        self.m_LapFont = reinterpret_cast<void *>(context.ecx);
+        self.m_LapFontScale = { hook::Ref<float>( data + 0xB4 ), hook::Ref<float>( data + 0xB8 ) };
+        self.SetFontScale( self.m_LapFont, self.m_LapFontScale.m_X * self.m_FactorX,
+            self.m_LapFontScale.m_Y * self.m_FactorY );
+    }
+
+
+    void HudScaling::LapTextEnd( safetyhook::Context & )
+    {
+        HudScaling & self = GetInstance();
+        if (self.m_LapFont != nullptr)
+        {
+            self.SetFontScale( self.m_LapFont, self.m_LapFontScale.m_X, self.m_LapFontScale.m_Y );
+            self.m_LapFont = nullptr;
+        }
+    }
+
+
     bool HudScaling::Install(
         const HudSettings & settings
     )
@@ -387,6 +434,12 @@ namespace nfs5
 
         if (settings.m_ScaleText)
         {
+            m_LapTextEndHook = hook::CreateMid( "LapTextEnd", hud::DIRECT_TEXT_END.m_Address, hud::DIRECT_TEXT_END.m_Signature, &LapTextEnd );
+            if (m_LapTextEndHook)
+                m_LapTextBeginHook = hook::CreateMid( "LapTextBegin", hud::DIRECT_TEXT_BEGIN.m_Address, hud::DIRECT_TEXT_BEGIN.m_Signature, &LapTextBegin );
+            if (!m_LapTextBeginHook)
+                m_LapTextEndHook.reset();
+
             m_TextEndHook = hook::CreateMid( "HudTextEnd", hud::TEXT_END.m_Address, hud::TEXT_END.m_Signature, &TextEndMidHook );
 
             if (m_TextEndHook != nullptr)
@@ -414,6 +467,8 @@ namespace nfs5
         m_DigitalSpeedPatch.Restore();
         m_DigitalRpmPatch.Restore();
         LoadingScreen::GetInstance().Uninstall();
+        m_LapTextBeginHook.reset();
+        m_LapTextEndHook.reset();
         m_TextBeginHook.reset();
         m_TextEndHook.reset();
 
