@@ -24,8 +24,8 @@
 
 ## Overview
 
-**NFS5 Enhanced** is an *enhanced vanilla* patch with optional Evolution data and handling fixes.
-The game renders its own models,
+**NFS5 Enhanced** is an *enhanced vanilla* patch. It does not add cars, tracks, physics changes
+or new visuals. Everything the game shows is still drawn by the game itself, with its own models,
 textures, HUD art and fonts. What changes is everything around it: the projection is widened
 instead of cropped, the HUD keeps its 640x480 proportions at FullHD, 2K, 4K, 8K, motion is
 interpolated between simulation steps, distant scenery and cars stay on screen, and a long list
@@ -106,7 +106,7 @@ Gamepads are read through [SDL3](https://libsdl.org), the game never talks to th
 | Feature | What it does |
 |---|---|
 | HUD scaling | The race HUD and the in race menus grow with the screen height, so they keep the size they had at 640x480. Each element stays anchored to its own screen edge. |
-| Text scaling | HUD text scales with the rest of the HUD, including the current and total lap numbers in a race. |
+| Text scaling | HUD text is scaled together with the rest of the HUD. |
 | Options that apply | Speedometer, tachometer and the other *Options > Display* settings now apply in races at every resolution. The game edited the layout of one resolution and raced with another. |
 | Analog or digital | A gauge set to analog shows only the gauge, a gauge set to digital shows only the number. The original drew the digital value inside the analog gauge too. |
 | Options preview | The HUD preview in the options menu is scaled to match. |
@@ -196,8 +196,6 @@ Get the latest release from the [Releases](https://github.com/iArtorias/nfs5_enh
 Copy `nfs5_enhanced.asi`, `nfs5_enhanced.ini` and `SDL3.dll` next to `Porsche.exe`, and `dx11z.dll` into the
 `Drivers` folder of the game, next to `dx7z.dll`. If you use DDrawCompat with the stock driver, back
 up your `DDrawCompat.ini` and copy the included one over it.
-
-For the optional Essentials data pack, copy the included `GameplayFixes` folder next to `Porsche.exe`. The plugin reads matching files from that folder when `GameplayRedirect = 1` under `[IO]`.
 
 ### 3. Remove SilentPatchNFS90s
 
@@ -317,11 +315,10 @@ has its original size.
 </details>
 
 <details>
-<summary><b>Distant scenery appears in isolation or the frame rate drops on open tracks</b></summary>
+<summary><b>Frame rate drops on some tracks</b></summary>
 
-If an older INI sets `MinDrawDistance = 20000`, lower it to `2000` under `[Detail]`.
-The 20 km minimum can expose isolated trees or rock faces on distant sections of the Pyrenees track.
-For a shorter view on slower systems, set `MinDrawDistance = 0` and lower `DrawDistanceScale` to `1.5` or `1.0`.
+For a shorter draw distance, set `MinDrawDistance = 0` under `[Detail]` and lower
+`DrawDistanceScale` to `1.5`. Use `1.0` for the original track draw distance.
 
 </details>
 
