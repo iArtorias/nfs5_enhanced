@@ -28,6 +28,7 @@
 #include "subsystems/detail/detail.h"
 #include "subsystems/text/text_quality.h"
 #include "subsystems/menu/menu_scroll.h"
+#include "subsystems/menu/parts_catalog.h"
 #include "subsystems/movie/movie_upscale.h"
 #include "subsystems/camera/gt1_camera.h"
 #include "subsystems/car_fixes/car_fixes.h"
@@ -246,6 +247,8 @@ namespace nfs5
             IoHooks::GetInstance().Install( settings.m_Io );
             Gamepad::GetInstance().Install( settings.m_Controller, directory );
             MenuScroll::GetInstance().Install( settings.m_Menu );
+            if (settings.m_Menu.m_GroupEngineParts)
+                parts_catalog::Install();
             MovieUpscale::GetInstance().Install( settings.m_Movie );
             Gt1Camera::GetInstance().Install();
             CarFixes::GetInstance().Install( settings.m_CarFixes );
@@ -286,6 +289,7 @@ extern "C" BOOL WINAPI DllMain(
             nfs5::CarFixes::GetInstance().Uninstall();
             nfs5::Gt1Camera::GetInstance().Uninstall();
             nfs5::MovieUpscale::GetInstance().Uninstall();
+            nfs5::parts_catalog::Uninstall();
             nfs5::MenuScroll::GetInstance().Uninstall();
             nfs5::Gamepad::GetInstance().Uninstall();
             nfs5::IoHooks::GetInstance().Uninstall();

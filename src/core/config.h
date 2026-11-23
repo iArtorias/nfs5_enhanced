@@ -202,6 +202,7 @@ namespace nfs5
 
         // Wheel over a closed drop down list picks the next or previous entry.
         bool m_WheelSelect = true;
+        bool m_GroupEngineParts = true;
     };
 
     // Intro and menu movies.
