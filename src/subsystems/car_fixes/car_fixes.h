@@ -25,6 +25,13 @@ namespace nfs5
     private:
 
         CarFixesSettings m_Settings;
+        hook::BytePatch m_UsedCarAgePatch;
+        std::unique_ptr<safetyhook::MidHook> m_UsedCarCandidateHook;
+        std::unique_ptr<safetyhook::MidHook> m_UsedCarAdvanceHook;
+        std::unique_ptr<safetyhook::MidHook> m_UsedCarDisplayHook;
+        static void UsedCarDisplayHook( safetyhook::Context & context );
+        static void UsedCarCandidateHook( safetyhook::Context & context );
+        static void UsedCarAdvanceHook( safetyhook::Context & context );
         std::unique_ptr<safetyhook::InlineHook> m_LoadPartsHook;
         hook::CallSitePatch m_CarListPostLoadCall;
         hook::BytePatch m_SuperchargerStrPatch;
