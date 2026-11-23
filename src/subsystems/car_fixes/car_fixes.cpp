@@ -626,6 +626,8 @@ namespace nfs5
             if (m_NewCarGarageLimit.Apply( "NewCarGarageLimit", newDealer.m_Address, newDealer.m_Signature, jump ) &&
                 !m_UsedCarGarageLimit.Apply( "UsedCarGarageLimit", usedDealer.m_Address, usedDealer.m_Signature, jump ))
                 m_NewCarGarageLimit.Restore();
+        }
+
         if (settings.m_FixUsedCarAgeGap)
         {
             constexpr std::uint8_t thresholds[] = { 54,0,0,0, 54,0,0,0, 54,0,0,0, 54,0,0,0 };
