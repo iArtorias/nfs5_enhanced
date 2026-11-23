@@ -814,6 +814,14 @@ namespace nfs5::game
         // Each signed short branch skips the garage-full message after the dealer's funds check.
         inline constexpr Site NEW_CAR_GARAGE_LIMIT = { 0x00501D92, "7C 07 BE 3D 00 00 00 EB AB" };
         inline constexpr Site USED_CAR_GARAGE_LIMIT = { 0x00501FD6, "7C 07 BE 3D 00 00 00 EB AC" };
+        inline constexpr Site USED_CAR_AGE_7_TO_10 =
+        {
+            0x005B7A2C, "46 00 00 00 50 00 00 00 50 00 00 00 46 00 00 00"
+        };
+        inline constexpr Site USED_CAR_CANDIDATE = { 0x004F80F6, "8B 09 8D 70 FF 8B 0C 99" };
+        // Nonempty market return path of the UsedCar list builder at 0x004F9010.
+        inline constexpr Site USED_CAR_DISPLAY_READY = { 0x004F919E, "5D 5F 5E 5B 83 C4 10 C3" };
+        inline constexpr Site USED_CAR_ADVANCE = { 0x004F81FE, "43 3B DD 89 5C 24 10" };
 
         // 'CCarParts' loader ['sub_49C3A0'], cdecl void. Loads 'nfs5.prt' into a contiguous heap
         // buffer of 360 byte records stored at 'PARTS_DATA' with count at 'PARTS_COUNT'.
