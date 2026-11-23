@@ -618,6 +618,16 @@ namespace nfs5
         if (m_Installed)
             return true;
 
+        if (settings.m_RemoveGaragePurchaseLimit)
+        {
+            constexpr std::uint8_t jump[] = { 0xEB };
+            const auto & newDealer = cf::NEW_CAR_GARAGE_LIMIT;
+            const auto & usedDealer = cf::USED_CAR_GARAGE_LIMIT;
+            if (m_NewCarGarageLimit.Apply( "NewCarGarageLimit", newDealer.m_Address, newDealer.m_Signature, jump ) &&
+                !m_UsedCarGarageLimit.Apply( "UsedCarGarageLimit", usedDealer.m_Address, usedDealer.m_Signature, jump ))
+                m_NewCarGarageLimit.Restore();
+        }
+
         if (settings.m_FixUsedCarAgeGap)
         {
             constexpr std::uint8_t thresholds[] = { 54,0,0,0, 54,0,0,0, 54,0,0,0, 54,0,0,0 };
@@ -745,6 +755,8 @@ namespace nfs5
         if (!m_Installed)
             return;
 
+        m_UsedCarGarageLimit.Restore();
+        m_NewCarGarageLimit.Restore();
         m_UsedCarCandidateHook.reset();
         m_UsedCarAdvanceHook.reset();
         m_UsedCarDisplayHook.reset();

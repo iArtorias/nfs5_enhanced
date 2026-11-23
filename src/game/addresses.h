@@ -822,6 +822,9 @@ namespace nfs5::game
 
     namespace car_fixes
     {
+        // Each signed short branch skips the garage-full message after the dealer's funds check.
+        inline constexpr Site NEW_CAR_GARAGE_LIMIT = { 0x00501D92, "7C 07 BE 3D 00 00 00 EB AB" };
+        inline constexpr Site USED_CAR_GARAGE_LIMIT = { 0x00501FD6, "7C 07 BE 3D 00 00 00 EB AC" };
         inline constexpr Site USED_CAR_AGE_7_TO_10 =
         {
             0x005B7A2C, "46 00 00 00 50 00 00 00 50 00 00 00 46 00 00 00"
