@@ -212,6 +212,36 @@ namespace nfs5
         bool m_Upscale = true;
     };
 
+    // Runtime fixes for car/part database bugs, authoring quirks, and upgrade physics defects.
+    struct CarFixesSettings
+    {
+        bool m_Enabled = true;
+
+        // Fix '96 911 Carrera 4S (993) sim filename typo and '92 928 GTS dash/camera offsets.
+        bool m_FixCarDatabase = true;
+
+        // Fix 'nfs5.prt' data bugs: 996 Stage 4 Supercharger 1110 vs 110 typo, 930 Turbo High
+        // Performance Exhaust zero torque curve, and Heavy Duty Shocks 0.80 downgrade.
+        bool m_FixPartBugs = true;
+
+        // Fix 'nfs5.prt' authoring quirks: stray drag on 356 Street Performance Springs and 356A
+        // 1300 Engine Upgrade, Boxster Hardtop -20% drag, 944 Bumpers #2 zero downforce, 993 Extra
+        // Stiff Sway Bar weight, and 993 Slicks 1.30 grip rating.
+        bool m_FixPartQuirks = true;
+
+        // Fix the '"Supercharged"' vs '"Supercharger"' subcategory check in 'Porsche.exe'.
+        bool m_FixSuperchargerFlag = true;
+
+        // Update redline RPM on engine swaps and ensure engine swaps apply before engine bolt-ons.
+        bool m_FixEngineSwaps = true;
+
+        // Preserve Springs ride-height lowering when the car setup slider writes ride height.
+        bool m_FixSpringLowering = true;
+
+        // Rebalance the wet-weather tire surface grip table in 'Porsche.exe'.
+        bool m_FixWetTireTable = true;
+    }
+  
     // Sound.
     struct AudioSettings
     {
@@ -235,6 +265,7 @@ namespace nfs5
         ControllerSettings m_Controller;
         MenuSettings m_Menu;
         MovieSettings m_Movie;
+        CarFixesSettings m_CarFixes;
         AudioSettings m_Audio;
     };
 

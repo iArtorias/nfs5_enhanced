@@ -808,4 +808,95 @@ namespace nfs5::game
             0x0056A920, "8B 44 24 18 81 EC 18 0A 00 00 85 C0 53 55 56 57"
         };
     }
+
+    namespace car_fixes
+    {
+        // 'CCarParts' loader ['sub_49C3A0'], cdecl void. Loads 'nfs5.prt' into a contiguous heap
+        // buffer of 360 byte records stored at 'PARTS_DATA' with count at 'PARTS_COUNT'.
+        inline constexpr Site PARTS_LOAD =
+        {
+            0x0049C3A0, "A1 48 B3 65 00 83 EC 50 8D 4C 24 00 56"
+        };
+
+        inline constexpr GameAddr PARTS_COUNT = 0x00628F80;
+        inline constexpr GameAddr PARTS_DATA = 0x00628F84;
+        inline constexpr std::size_t PART_RECORD_SIZE = 0x168;
+        inline constexpr std::size_t PART_ID_OFFSET = 0x00;
+        inline constexpr std::size_t PART_MAIN_CAT_OFFSET = 0x26;
+        inline constexpr std::size_t PART_SUBCAT_OFFSET = 0x28;
+        inline constexpr std::size_t PART_WEIGHT_OFFSET = 0x54;
+        inline constexpr std::size_t PART_DRAG_OFFSET = 0x58;
+        inline constexpr std::size_t PART_STAT_C0_OFFSET = 0xC0;
+        inline constexpr std::size_t PART_STAT_C4_OFFSET = 0xC4;
+        inline constexpr std::size_t PART_TORQUE_OFFSET = 0x110;
+        inline constexpr std::size_t PART_TORQUE_COUNT = 20;
+
+        // End of 'CCarList' loader ['sub_4F3B60'], right after all 1648 byte records from
+        // 'nfs5.car' have been copied into the pointer vector at 'CAR_LIST_VECTOR' and right
+        // before 'sub_4F3E40' [cdecl void] indexes them for the front end.
+        inline constexpr Site CAR_LIST_POST_LOAD_CALL =
+        {
+            0x004F3CB5, "E8 86 01 00 00 5F 5E 83 C4 5C C3"
+        };
+
+        inline constexpr GameAddr CAR_LIST_VECTOR = 0x006919E8;
+        inline constexpr std::size_t CAR_ID_OFFSET = 0x00;
+        inline constexpr std::size_t CAR_SIM_NAME_OFFSET = 0xB1;
+        inline constexpr std::size_t CAR_DASH_CAMERA_OFFSET = 0x2E8;
+
+        // Subcategory literal compared in 'sub_49CB50' at 0x0049CE09. The game checks
+        // '"Supercharged"' while 'nfs5.prt' uses '"Supercharger"', so supercharger kits never
+        // set 'sim->induction' [+0x4C] to '2'.
+        inline constexpr Site SUPERCHARGER_STR =
+        {
+            0x005D0D04, "53 75 70 65 72 63 68 61 72 67 65 64 00"
+        };
+
+        // Installed part loop inside 'sub_49CB50'. 'esi' is the car object, '[esi + 0x760]' is the
+        // loaded '.sim' physics block, and '[esi + 0x768]' holds 20 pointers to installed part
+        // copies.
+        inline constexpr Site PARTS_LOOP_START =
+        {
+            0x0049CD0D, "8D BE 68 07 00 00 C7 44 24 18 14 00 00 00 8B 0F"
+        };
+
+        // Entry to the '"Engine"' swap torque copy loop inside 'sub_49CB50'. 'edi' points to the
+        // current 'Part*' slot and 'esi' is the car object. The stock routine copies torque but
+        // never updates 'sim->redline' [+0x94] or its reciprocal [+0x14C] from 'part+0xC0'.
+        inline constexpr Site ENGINE_SWAP_START =
+        {
+            0x0049CDA2, "B8 9C 00 00 00 8B 0F 8B 96 60 07 00"
+        };
+
+        // First instruction after the 20-part loop finishes [also jump target for 959/928/GT2/GT3].
+        inline constexpr Site PARTS_LOOP_END =
+        {
+            0x0049D212, "8B 8E 60 07 00 00 BF 15 00 00 00 8D"
+        };
+
+        // Car setup ride height application inside 'sub_49CB50'. At 0x0049D567, 'fstp [eax+0x120]'
+        // overwrites the spring lowering value written by the Springs handler at 0x0049D012
+        // instead of adding to it.
+        inline constexpr Site SETUP_RIDE_HEIGHT_PRE =
+        {
+            0x0049D549, "8B 96 58 05 00 00 8B 86 60 07 00 00 DB 82 20 01"
+        };
+
+        inline constexpr Site SETUP_RIDE_HEIGHT_POST =
+        {
+            0x0049D56D, "8B 86 60 07 00 00 D9 80 20 01 00 00 D8 0D 60 24"
+        };
+
+        inline constexpr std::size_t CAR_SIM_PTR_OFFSET = 0x760;
+        inline constexpr std::size_t CAR_PARTS_ARRAY_OFFSET = 0x768;
+        inline constexpr std::size_t CAR_PARTS_SLOT_COUNT = 20;
+        inline constexpr std::size_t SIM_REDLINE_OFFSET = 0x94;
+        inline constexpr std::size_t SIM_RIDE_HEIGHT_OFFSET = 0x120;
+        inline constexpr std::size_t SIM_INV_REDLINE_OFFSET = 0x14C;
+
+        // Wet weather tire surface grip table, float[12][3] indexed by [surface][tire_type] where
+        // tire_type is 0 = Stock, 1 = Rain, 2 = Slicks. Read at 0x004A198E and 0x0040BB7A.
+        inline constexpr GameAddr WET_TIRE_GRIP_TABLE = 0x005D0E4C;
+        inline constexpr std::size_t WET_TIRE_TABLE_FLOATS = 36;
+    }
 }
