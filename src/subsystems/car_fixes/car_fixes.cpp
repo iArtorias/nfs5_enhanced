@@ -6,6 +6,7 @@
 #include <random>
 #include <vector>
 #include <cstring>
+#include <tuple>
 #include <utility>
 
 #include "../../core/log.h"
@@ -548,6 +549,37 @@ namespace nfs5
         m_WetTireTablePatched = false;
     }
 
+    void CarFixes::UsedCarDisplayHook( safetyhook::Context & context )
+    {
+        // EAX holds the dealer's filtered view. Buying a row uses its offer pointer.
+        auto * view = reinterpret_cast<CarRecordVector *>( context.eax );
+        const auto * catalog = hook::Ref<CarRecordVector *>( game::car_fixes::CAR_LIST_VECTOR );
+        if (!view || !view->m_Begin || view->m_End == view->m_Begin ||
+            !catalog || !catalog->m_Begin)
+            return;
+
+        // The offer embeds its model record at +4. Look up the original database
+        // entry so existing saves and tied model years use the editor's ordering.
+        const auto rank = [catalog]( const std::uint8_t * offer )
+        {
+            const auto id = ReadPod<std::uint16_t>( offer + 4 );
+            for (auto it = catalog->m_Begin; it != catalog->m_End; ++it)
+            {
+                const auto * model = *it;
+                if (model && ReadPod<std::uint16_t>( model ) == id)
+                    return std::tuple{ false, ReadPod<std::uint32_t>( model + 0x1B0 ),
+                        ReadPod<std::uint32_t>( model + 0x1AC ),
+                        ReadPod<std::uint16_t>( model + 0x1F8 ), it - catalog->m_Begin };
+            }
+            return std::tuple{ true, std::uint32_t{}, std::uint32_t{},
+                std::uint16_t{}, std::ptrdiff_t{} };
+        };
+        std::stable_sort( view->m_Begin, view->m_End, [&rank]( auto * left, auto * right )
+        {
+            return rank( left ) < rank( right );
+        } );
+    }
+
     void CarFixes::UsedCarCandidateHook( safetyhook::Context & context )
     {
         // EBX selects the model for both the eligibility check and offer creation.
@@ -597,11 +629,17 @@ namespace nfs5
         {
             const auto & advance = cf::USED_CAR_ADVANCE;
             const auto & candidate = cf::USED_CAR_CANDIDATE;
-            m_UsedCarAdvanceHook = hook::CreateMid( "UsedCarAdvance", advance.m_Address, advance.m_Signature, &UsedCarAdvanceHook );
+            const auto & display = cf::USED_CAR_DISPLAY_READY;
+            m_UsedCarDisplayHook = hook::CreateMid( "UsedCarDisplay", display.m_Address, display.m_Signature, &UsedCarDisplayHook );
+            if (m_UsedCarDisplayHook)
+                m_UsedCarAdvanceHook = hook::CreateMid( "UsedCarAdvance", advance.m_Address, advance.m_Signature, &UsedCarAdvanceHook );
             if (m_UsedCarAdvanceHook)
                 m_UsedCarCandidateHook = hook::CreateMid( "UsedCarCandidate", candidate.m_Address, candidate.m_Signature, &UsedCarCandidateHook );
             if (!m_UsedCarCandidateHook)
+            {
                 m_UsedCarAdvanceHook.reset();
+                m_UsedCarDisplayHook.reset();
+            }
         }
 
         if (settings.m_FixPartBugs || settings.m_FixPartQuirks)
@@ -709,6 +747,7 @@ namespace nfs5
 
         m_UsedCarCandidateHook.reset();
         m_UsedCarAdvanceHook.reset();
+        m_UsedCarDisplayHook.reset();
         m_UsedCarAgePatch.Restore();
         RestoreWetTireTable();
         m_SetupRideHeightPostHook.reset();
