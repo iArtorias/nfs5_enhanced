@@ -291,6 +291,7 @@ namespace nfs5
         s.m_CarFixes.m_FixEngineSwaps = ReadBool( L"CarFixes", L"FixEngineSwaps", true );
         s.m_CarFixes.m_FixSpringLowering = ReadBool( L"CarFixes", L"FixSpringLowering", true );
         s.m_CarFixes.m_FixWetTireTable = ReadBool( L"CarFixes", L"FixWetTireTable", true );
+        s.m_Audio.m_MirrorPanFix = ReadBool( L"Audio", L"MirrorPanFix", true );
     }
 
     void Config::Dump() const
@@ -337,5 +338,6 @@ namespace nfs5
             s.m_CarFixes.m_Enabled, s.m_CarFixes.m_FixCarDatabase, s.m_CarFixes.m_FixPartBugs,
             s.m_CarFixes.m_FixPartQuirks, s.m_CarFixes.m_FixSuperchargerFlag, s.m_CarFixes.m_FixEngineSwaps,
             s.m_CarFixes.m_FixSpringLowering, s.m_CarFixes.m_FixWetTireTable );
+        LOG_INFO( "  Audio MirrorPanFix={}", s.m_Audio.m_MirrorPanFix );
     }
 }

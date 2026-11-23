@@ -240,6 +240,14 @@ namespace nfs5
 
         // Rebalance the wet-weather tire surface grip table in 'Porsche.exe'.
         bool m_FixWetTireTable = true;
+    }
+  
+    // Sound.
+    struct AudioSettings
+    {
+        // On mirrored tracks a car seen on the left is heard on the right. The game mirrors the
+        // right axis of the listener and the sound functions mirror the car position once more.
+        bool m_MirrorPanFix = true;
     };
 
     struct Settings
@@ -258,6 +266,7 @@ namespace nfs5
         MenuSettings m_Menu;
         MovieSettings m_Movie;
         CarFixesSettings m_CarFixes;
+        AudioSettings m_Audio;
     };
 
     class Config
