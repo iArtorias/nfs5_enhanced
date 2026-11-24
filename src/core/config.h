@@ -150,7 +150,7 @@ namespace nfs5
         float m_DrawDistanceScale = 2.0f;
 
         // Draw distance in metres every track position gets at least, '0' follows the track data.
-        float m_MinDrawDistance = 20000.0f;
+        float m_MinDrawDistance = 2000.0f;
 
         // Extra factor on the far clip plane after it follows the draw distance.
         float m_FarClipMultiplier = 1.0f;

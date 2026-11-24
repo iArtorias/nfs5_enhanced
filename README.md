@@ -125,7 +125,7 @@ Gamepads are read through [SDL3](https://libsdl.org), the game never talks to th
 
 | Feature | What it does |
 |---|---|
-| Draw distance | Track scenery is drawn twice as far, on top of the *View Distance* option. `MinDrawDistance` draws at least a fixed distance everywhere. |
+| Draw distance | By default the patch doubles the distance supplied by the track and applies a 2,000 m minimum before the game applies its *View Distance* option. |
 | Consistent scenery | Two kinds of scenery had fixed limits of 600 and 700 m that ignored the draw distance. With a longer distance they disappeared while everything around them was still drawn, buildings floated and ground went missing. They now follow the draw distance. |
 | Far clip | The 700 unit far plane that cut off cars and objects follows the new draw distance, with room for large pieces of scenery so they are not sliced at the horizon. |
 | No nearby holes | Ground close to the car no longer disappears behind the track's occlusion walls, tested in the top view without height, which left holes just outside a slightly raised spot. `OcclusionRange` (default 220m) sets how close, `0` restores the original test. |
@@ -146,10 +146,20 @@ Gamepads are read through [SDL3](https://libsdl.org), the game never talks to th
 | Sun glare crash | The sun glare test read pixels outside the frame when the sun sat at the screen edge. |
 | Alt+Tab | All keys are released when the window loses focus, so no more stuck throttle. |
 | Alt+F4 | Closes the game again, a plain Alt still cannot stall it. |
+| Post-race cards | Each press of Space advances one card. |
 | Lock keys | `Caps Lock`, `Num Lock` and `Scroll Lock` are no longer forced off at startup. |
 | Clipboard | `Ctrl+V` pastes into name and chat boxes. |
 | CPU affinity | Only the game's own threads are pinned to one core. Sound, input and presentation run freely instead of sharing a core with the game. |
 | OpenGL driver leak | Memory leak fix for the Verok OpenGL Thrash drivers |
+
+### Evolution
+
+| Feature | What it does |
+|---|---|
+| Used cars | Models aged 7–10 years can appear at the used dealer. Each refresh shuffles the candidates, then lists the offers by era, class and model year. |
+| Garage purchases | Both dealers allow purchases beyond their original garage limits (80 cars at the new dealer and 84 at the used dealer). |
+| Engine parts | The parts shop and Car Setup inventory group engine upgrades by subtype and order them by tier. Only groups with available parts appear. |
+| Car and part fixes | Runtime fixes correct car data, engine swap calculations, spring lowering and wet-weather tire grip. Individual switches are under `[CarFixes]`. |
 
 ### Loading
 
@@ -214,13 +224,15 @@ Everything is set in `nfs5_enhanced.ini`, and every setting is explained in the 
 | `[Timing]` | Precise game clock. |
 | `[Widescreen]` | Hor+, field of view, flares, resolution list, race resolution and color depth, car detail distance. |
 | `[Framerate]` | Frame caps, interpolation. |
-| `[IO]`, `[Loading]` | Read chunk size, free space cache, CPU clock check. |
+| `[IO]`, `[Loading]` | Read chunk size, free space cache, optional `GameplayFixes` file overrides and CPU clock check. |
 | `[HudScaling]` | HUD size, text, gauge style, loading screen. |
 | `[Text]` | Sharp text, enlargement factor and edge sharpness. |
 | `[Detail]` | Draw distance, far clip, distant wheels, occlusion range. |
 | `[Controller]` | SDL3 gamepads, rumble, dead zones, default bindings. |
-| `[Menu]` | Mouse wheel and key scrolling of the menu lists. |
+| `[Menu]` | Mouse wheel and keyboard scrolling, engine part grouping in the shop and Car Setup inventory. |
 | `[Movie]` | Hands the movie frames to the DX11 driver, which enlarges them. |
+| `[CarFixes]` | Evolution dealers and garage limits, car and part database corrections, upgrade calculations and tire grip. |
+| `[Audio]` | `MirrorPanFix` corrects left/right stereo positioning on mirrored tracks. |
 
 Common adjustments:
 
@@ -231,13 +243,13 @@ Common adjustments:
 | Races at the desktop resolution | `RaceResolution = desktop` |
 | A smaller or larger HUD | `ScaleMultiplier = 0.8` or `1.2` |
 | Softer or crisper text edges | `Sharpness = 0.3` or `1.2` |
-| The original draw distance | `DrawDistanceScale = 1.0` |
+| The original track draw distance | `DrawDistanceScale = 1.0` and `MinDrawDistance = 0` |
 | A frame cap of 144 in races | `FpsLimit = 144` |
 | A window instead of fullscreen | `WindowMode = 2` |
 | No VSync | `VSync = 0` |
 | 8x antialiasing | `Antialiasing = 8` |
 | The stock DirectX 7 driver | `ThrashDriver = dx` |
-| Scenery even further away | `DrawDistanceScale = 4.0`, or a fixed `MinDrawDistance = 2000` |
+| Use the track’s own distance variation without the 2 km minimum | `MinDrawDistance = 0` |
 | Stronger or weaker rumble | `RumbleStrength = 1.5` or `0.5` |
 | The game's own DirectInput controller handling | `Enabled = 0` under `[Controller]` |
 | The original occlusion test near walls | `OcclusionRange = 0` under `[Detail]` |
@@ -305,8 +317,8 @@ has its original size.
 <details>
 <summary><b>Frame rate drops on some tracks</b></summary>
 
-The longer draw distance asks a lot of an engine from 2000 on wide open tracks. Lower
-`DrawDistanceScale` to `1.5`, or `1.0` for the original distance.
+For a shorter draw distance, set `MinDrawDistance = 0` under `[Detail]` and lower
+`DrawDistanceScale` to `1.5`. Use `1.0` for the original track draw distance.
 
 </details>
 

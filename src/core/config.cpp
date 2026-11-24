@@ -260,7 +260,7 @@ namespace nfs5
         s.m_Text.m_Sharpness = std::clamp( ReadFloat( L"Text", L"Sharpness", 1.0f ), 0.25f, 4.0f );
         s.m_Detail.m_Enabled = ReadBool( L"Detail", L"Enabled", true );
         s.m_Detail.m_DrawDistanceScale = std::clamp( ReadFloat( L"Detail", L"DrawDistanceScale", 2.0f ), 1.0f, 32.0f );
-        s.m_Detail.m_MinDrawDistance = std::clamp( ReadFloat( L"Detail", L"MinDrawDistance", 20000.0f ), 0.0f, 30000.0f );
+        s.m_Detail.m_MinDrawDistance = std::clamp( ReadFloat( L"Detail", L"MinDrawDistance", DetailSettings{}.m_MinDrawDistance ), 0.0f, 30000.0f );
         s.m_Detail.m_FarClipMultiplier = std::clamp( ReadFloat( L"Detail", L"FarClipMultiplier", 1.0f ), 1.0f, 32.0f );
         s.m_Detail.m_KeepDistantWheels = ReadBool( L"Detail", L"KeepDistantWheels", true );
         s.m_Detail.m_FullCarDetail = ReadBool( L"Detail", L"FullCarDetail", true );
