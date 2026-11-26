@@ -32,6 +32,7 @@
 #include "subsystems/movie/movie_upscale.h"
 #include "subsystems/camera/gt1_camera.h"
 #include "subsystems/car_fixes/car_fixes.h"
+#include "subsystems/car_fixes/damage_cull.h"
 
 namespace nfs5
 {
@@ -252,6 +253,7 @@ namespace nfs5
             MovieUpscale::GetInstance().Install( settings.m_Movie );
             Gt1Camera::GetInstance().Install();
             CarFixes::GetInstance().Install( settings.m_CarFixes );
+            DamageCull::GetInstance().Install( settings.m_CarFixes.m_DamageCullFix );
 
             LOG_INFO( "Initialization finished" );
         }
@@ -286,6 +288,7 @@ extern "C" BOOL WINAPI DllMain(
     {
         if (reserved == nullptr && nfs5::s_Hooked.load())
         {
+            nfs5::DamageCull::GetInstance().Uninstall();
             nfs5::CarFixes::GetInstance().Uninstall();
             nfs5::Gt1Camera::GetInstance().Uninstall();
             nfs5::MovieUpscale::GetInstance().Uninstall();
