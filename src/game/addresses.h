@@ -100,6 +100,16 @@ namespace nfs5::game
 
         inline constexpr std::size_t MIRROR_LISTENER_BRANCH = 8;
 
+        // R3DCarLOD::Draw: the face plane stream of a dented part is only unbound when the part's
+        // damage flag is set and the menu runs, 'mov al, [part + 0x50]' up to the 'jne' to the unbind.
+        inline constexpr Site DAMAGE_CULL =
+        {
+            0x0043CBC9, "8A 44 0A 50 84 C0 74 09 A1 ? ? ? ? 85 C0 75 19"
+        };
+
+        // 'mov eax, [FRONT_END]', the menu check of the site above.
+        inline constexpr std::size_t DAMAGE_CULL_MENU = 8;
+
         // 'THRASH_opendll' returns nonzero on success.
         inline constexpr Site THRASH_OPEN_DLL =
         {

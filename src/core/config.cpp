@@ -296,6 +296,7 @@ namespace nfs5
         s.m_CarFixes.m_FixUsedCarAgeGap = ReadBool( L"CarFixes", L"FixUsedCarAgeGap", true );
         s.m_CarFixes.m_ShuffleUsedCarCandidates = ReadBool( L"CarFixes", L"ShuffleUsedCarCandidates", true );
         s.m_CarFixes.m_FixWetTireTable = ReadBool( L"CarFixes", L"FixWetTireTable", true );
+        s.m_CarFixes.m_DamageCullFix = std::clamp( ReadInt( L"CarFixes", L"DamageCullFix", 2 ), 0, 2 );
         s.m_Audio.m_MirrorPanFix = ReadBool( L"Audio", L"MirrorPanFix", true );
     }
 
@@ -343,6 +344,7 @@ namespace nfs5
             s.m_CarFixes.m_Enabled, s.m_CarFixes.m_FixCarDatabase, s.m_CarFixes.m_FixPartBugs,
             s.m_CarFixes.m_FixPartQuirks, s.m_CarFixes.m_FixSuperchargerFlag, s.m_CarFixes.m_FixEngineSwaps,
             s.m_CarFixes.m_FixSpringLowering, s.m_CarFixes.m_FixWetTireTable );
+        LOG_INFO( "  CarFixes DamageCullFix={}", s.m_CarFixes.m_DamageCullFix );
         LOG_INFO( "  Audio MirrorPanFix={}", s.m_Audio.m_MirrorPanFix );
     }
 }

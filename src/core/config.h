@@ -242,6 +242,11 @@ namespace nfs5
 
         // Rebalance the wet-weather tire surface grip table in 'Porsche.exe'.
         bool m_FixWetTireTable = true;
+
+        // Faces of dented body parts vanish by camera angle, the game culls them with the planes of
+        // the undamaged model. 0 original, 1 the game's menu rule also in races, 2 every deformable
+        // part of a damaged car. Independent of 'm_Enabled'.
+        int m_DamageCullFix = 2;
         bool m_RemoveGaragePurchaseLimit = true;
         bool m_FixUsedCarAgeGap = true;
         bool m_ShuffleUsedCarCandidates = true;

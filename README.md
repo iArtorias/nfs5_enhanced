@@ -159,7 +159,7 @@ Gamepads are read through [SDL3](https://libsdl.org), the game never talks to th
 | Used cars | Models aged 7–10 years can appear at the used dealer. Each refresh shuffles the candidates, then lists the offers by era, class and model year. |
 | Garage purchases | Both dealers allow purchases beyond their original garage limits (80 cars at the new dealer and 84 at the used dealer). |
 | Engine parts | The parts shop and Car Setup inventory group engine upgrades by subtype and order them by tier. Only groups with available parts appear. |
-| Car and part fixes | Runtime fixes correct car data, engine swap calculations, spring lowering and wet-weather tire grip. Individual switches are under `[CarFixes]`. |
+| Car and part fixes | Runtime fixes correct car data, engine swap calculations, spring lowering, wet-weather tire grip and body panels of damaged cars that vanished by camera angle. Individual switches are under `[CarFixes]`. |
 
 ### Loading
 
@@ -231,7 +231,7 @@ Everything is set in `nfs5_enhanced.ini`, and every setting is explained in the 
 | `[Controller]` | SDL3 gamepads, rumble, dead zones, default bindings. |
 | `[Menu]` | Mouse wheel and keyboard scrolling, engine part grouping in the shop and Car Setup inventory. |
 | `[Movie]` | Hands the movie frames to the DX11 driver, which enlarges them. |
-| `[CarFixes]` | Evolution dealers and garage limits, car and part database corrections, upgrade calculations and tire grip. |
+| `[CarFixes]` | Evolution dealers and garage limits, car and part database corrections, upgrade calculations, tire grip and culling of damaged cars (`DamageCullFix`). |
 | `[Audio]` | `MirrorPanFix` corrects left/right stereo positioning on mirrored tracks. |
 
 Common adjustments:

@@ -44,6 +44,7 @@ add_library( nfs5_enhanced SHARED
     src/subsystems/movie/movie_upscale.cpp
     src/subsystems/camera/gt1_camera.cpp
     src/subsystems/car_fixes/car_fixes.cpp
+    src/subsystems/car_fixes/damage_cull.cpp
     src/resources/version.rc
 )
 
